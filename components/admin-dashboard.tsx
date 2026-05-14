@@ -126,7 +126,7 @@ export function AdminDashboard() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
 
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-neutral-800">Loading...</p>
         </div>
       </div>
     );
@@ -144,7 +144,7 @@ export function AdminDashboard() {
               Admin Dashboard
             </h1>
 
-            <p className="text-gray-600 mt-1">
+            <p className="text-neutral-800 mt-1">
               Welcome, {admin?.name}
             </p>
           </div>
@@ -167,7 +167,7 @@ export function AdminDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
 
           <Card className="p-6">
-            <p className="text-gray-600 text-sm font-medium">
+            <p className="text-neutral-950 text-sm font-medium">
               Total Applications
             </p>
 
@@ -177,7 +177,7 @@ export function AdminDashboard() {
           </Card>
 
           <Card className="p-6">
-            <p className="text-gray-600 text-sm font-medium">
+            <p className="text-neutral-950 text-sm font-medium">
               Pending Review
             </p>
 
@@ -191,7 +191,7 @@ export function AdminDashboard() {
           </Card>
 
           <Card className="p-6">
-            <p className="text-gray-600 text-sm font-medium">
+            <p className="text-neutral-950 text-sm font-medium">
               Approved
             </p>
 
@@ -205,7 +205,7 @@ export function AdminDashboard() {
           </Card>
 
           <Card className="p-6">
-            <p className="text-gray-600 text-sm font-medium">
+            <p className="text-neutral-950 text-sm font-medium">
               Rejected
             </p>
 
@@ -227,7 +227,7 @@ export function AdminDashboard() {
 
             {/* Search */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-neutral-950 mb-2">
                 Search
               </label>
 
@@ -236,12 +236,13 @@ export function AdminDashboard() {
                 placeholder="Search by name, email, or restaurant..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="text-neutral-950 placeholder:text-neutral-600"
               />
             </div>
 
             {/* Status */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-neutral-950 mb-2">
                 Status
               </label>
 
@@ -250,7 +251,7 @@ export function AdminDashboard() {
                 onChange={(e) =>
                   setStatusFilter(e.target.value as any)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-neutral-950 bg-white"
               >
                 <option value="all">All Status</option>
 
@@ -264,7 +265,7 @@ export function AdminDashboard() {
 
             {/* Count */}
             <div className="flex items-end">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-neutral-950 font-medium">
                 Showing {filteredApplications.length} of{' '}
                 {applications.length} applications
               </p>
@@ -283,19 +284,33 @@ export function AdminDashboard() {
               <TableHeader>
                 <TableRow>
 
-                  <TableHead>Name</TableHead>
+                  <TableHead className="text-neutral-950 font-semibold">
+                    Name
+                  </TableHead>
 
-                  <TableHead>Email</TableHead>
+                  <TableHead className="text-neutral-950 font-semibold">
+                    Email
+                  </TableHead>
 
-                  <TableHead>Restaurant</TableHead>
+                  <TableHead className="text-neutral-950 font-semibold">
+                    Restaurant
+                  </TableHead>
 
-                  <TableHead>Job Title</TableHead>
+                  <TableHead className="text-neutral-950 font-semibold">
+                    Job Title
+                  </TableHead>
 
-                  <TableHead>Status</TableHead>
+                  <TableHead className="text-neutral-950 font-semibold">
+                    Status
+                  </TableHead>
 
-                  <TableHead>Applied</TableHead>
+                  <TableHead className="text-neutral-950 font-semibold">
+                    Applied
+                  </TableHead>
 
-                   <TableHead>Action</TableHead>
+                   <TableHead className="text-neutral-950 font-semibold">
+                     Action
+                   </TableHead>
 
 
 
@@ -307,8 +322,8 @@ export function AdminDashboard() {
                 {filteredApplications.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
-                      className="text-center py-8 text-gray-500"
+                      colSpan={7}
+                      className="text-center py-8 text-neutral-700"
                     >
                       No applications found
                     </TableCell>
@@ -317,19 +332,19 @@ export function AdminDashboard() {
                   filteredApplications.map((app) => (
                     <TableRow key={app._id}>
 
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium text-neutral-950">
                         {app.firstName} {app.lastName}
                       </TableCell>
 
-                      <TableCell>
+                      <TableCell className="text-neutral-950">
                         {app.email}
                       </TableCell>
 
-                      <TableCell>
+                      <TableCell className="text-neutral-950">
                         {app.currentRestaurant}
                       </TableCell>
 
-                      <TableCell>
+                      <TableCell className="text-neutral-950">
                         {app.jobTitle}
                       </TableCell>
 
@@ -344,7 +359,7 @@ export function AdminDashboard() {
                         </span>
                       </TableCell>
 
-                      <TableCell className="text-sm text-gray-600">
+                      <TableCell className="text-sm text-neutral-950">
                         {app.createdAt
                           ? new Date(
                               app.createdAt
@@ -352,6 +367,7 @@ export function AdminDashboard() {
                           : '-'}
                       </TableCell>
 
+                      <TableCell className="text-neutral-950" aria-label="Actions" />
                     </TableRow>
                   ))
                 )}
