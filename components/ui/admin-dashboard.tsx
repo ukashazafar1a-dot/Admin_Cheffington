@@ -31,6 +31,7 @@ export function AdminDashboard() {
   >([]);
 
   const [loading, setLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -49,7 +50,11 @@ export function AdminDashboard() {
   useEffect(() => {
     const fetchApplications = async () => {
       try {
-        setLoading(true);
+        if (applications.length === 0) {
+          setLoading(true);
+        } else {
+          setIsFetching(true);
+        }
 
         const filters = {
           status: statusFilter !== 'all' ? statusFilter : undefined,
@@ -65,13 +70,14 @@ export function AdminDashboard() {
         console.error('Error fetching applications:', error);
       } finally {
         setLoading(false);
+        setIsFetching(false);
       }
     };
 
     if (admin) {
       fetchApplications();
     }
-  }, [admin, statusFilter, searchTerm]);
+  }, [admin, applications.length, statusFilter, searchTerm]);
 
   // Filter applications
   useEffect(() => {
@@ -227,9 +233,16 @@ export function AdminDashboard() {
 
             {/* Search */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Search
-              </label>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Search
+                </label>
+                {isFetching && (
+                  <span className="text-sm text-gray-500">
+                    Searching...
+                  </span>
+                )}
+              </div>
 
               <Input
                 type="text"
