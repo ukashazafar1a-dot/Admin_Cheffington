@@ -74,14 +74,7 @@ export function AdminLogin() {
           </Button>
         </form>
 
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-gray-600 mb-2">
-            <strong>Getting Started:</strong>
-          </p>
-          <p className="text-sm text-gray-600 mb-1">Make sure MongoDB is running locally</p>
-          <p className="text-sm text-gray-600 mb-1">Backend should be running on port 5000</p>
-          <p className="text-sm text-gray-600">You can register a new admin account here</p>
-        </div>
+        
       </Card>
     </div>
   );
