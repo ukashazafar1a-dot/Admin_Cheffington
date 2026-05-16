@@ -19,6 +19,7 @@ import {
 import { useAuth } from '@/lib/auth-context';
 import { ChefApplication } from '@/lib/types';
 import { APIClient } from '@/lib/api-client';
+import { ApplicationDetailsModal } from './application-details-modal';
 
 export function AdminDashboard() {
   const router = useRouter();
@@ -38,7 +39,7 @@ export function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState<
     'all' | 'pending' | 'approved' | 'rejected'
   >('all');
-
+ const [selectedApp, setSelectedApp] = useState<ChefApplication | null>(null);
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !admin) {
@@ -110,6 +111,27 @@ export function AdminDashboard() {
   const handleLogout = () => {
     logout();
     router.push('/admin');
+  };
+  const handleApplicationUpdate = async () => {
+    // Refetch applications after update
+    try {
+      const filters = {
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        search: searchTerm || undefined,
+      };
+
+      const response = await APIClient.getChefApplications(filters);
+
+      if (response.success) {
+        setApplications(response.data || []);
+      } else {
+        console.error('Failed to refresh applications after update');
+      }
+
+      setSelectedApp(null);
+    } catch (error) {
+      console.error('Error refetching applications:', error);
+    }
   };
 
   const getStatusBadgeColor = (status: string) => {
@@ -364,6 +386,16 @@ export function AdminDashboard() {
                             ).toLocaleDateString()
                           : '-'}
                       </TableCell>
+                      <TableCell>
+                        <Button
+                          onClick={() => setSelectedApp(app)}
+                          variant="outline"
+                          size="sm"
+                          className="text-blue-600 hover:bg-blue-50"
+                        >
+                          View Details
+                        </Button>
+                      </TableCell>
 
                     </TableRow>
                   ))
@@ -378,6 +410,14 @@ export function AdminDashboard() {
         </Card>
 
       </div>
+      {/* Details Modal */}
+      {selectedApp && (
+        <ApplicationDetailsModal
+          application={selectedApp}
+          onClose={() => setSelectedApp(null)}
+          onUpdate={handleApplicationUpdate}
+        />
+      )}
     </div>
   );
 }

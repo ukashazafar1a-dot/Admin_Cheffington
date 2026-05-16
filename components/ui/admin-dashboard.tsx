@@ -38,6 +38,7 @@ export function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState<
     'all' | 'pending' | 'approved' | 'rejected'
   >('all');
+  const [selectedApp, setSelectedApp] = useState<ChefApplication | null>(null);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -374,6 +375,212 @@ export function AdminDashboard() {
         </Card>
 
       </div>
+
+      {/* Detail Modal */}
+      {selectedApp && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex justify-between items-center mb-6 border-b pb-4">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Application Details
+                </h2>
+                <button
+                  onClick={() => setSelectedApp(null)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Personal Information */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Personal Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">First Name</p>
+                    <p className="font-medium text-gray-900">
+                      {selectedApp.firstName}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Last Name</p>
+                    <p className="font-medium text-gray-900">
+                      {selectedApp.lastName}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Email</p>
+                    <p className="font-medium text-gray-900">
+                      {selectedApp.email}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Phone</p>
+                    <p className="font-medium text-gray-900">
+                      {selectedApp.phone || '-'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Professional Details */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Professional Details
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Current Restaurant</p>
+                    <p className="font-medium text-gray-900">
+                      {selectedApp.currentRestaurant || '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Job Title</p>
+                    <p className="font-medium text-gray-900">
+                      {selectedApp.jobTitle || '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Experience</p>
+                    <p className="font-medium text-gray-900">
+                      {selectedApp.yearsOfExperience || '-'} years
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Cuisine Specialty</p>
+                    <p className="font-medium text-gray-900">
+                      {selectedApp.cuisineSpecialties?.join(', ') || '-'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Address Information */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Address
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Address 1</p>
+                    <p className="font-medium text-gray-900">
+                      {selectedApp.address1 || '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Address 2</p>
+                    <p className="font-medium text-gray-900">
+                      {selectedApp.address2 || '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">City</p>
+                    <p className="font-medium text-gray-900">
+                      {selectedApp.city || '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">State</p>
+                    <p className="font-medium text-gray-900">
+                      {selectedApp.state || '-'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Restaurant Information */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Restaurant Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Restaurant Name</p>
+                    <p className="font-medium text-gray-900">
+                      {selectedApp.restaurantName || '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Restaurant Address</p>
+                    <p className="font-medium text-gray-900">
+                      {selectedApp.restaurantAddress || '-'}
+                    </p>
+                  </div>
+                  <div className="col-span-1 md:col-span-2">
+                    <p className="text-sm text-gray-600">Restaurant Website</p>
+                    <p className="font-medium text-gray-900">
+                      {selectedApp.restaurantWebsite ? (
+                        <a
+                          href={selectedApp.restaurantWebsite}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          {selectedApp.restaurantWebsite}
+                        </a>
+                      ) : (
+                        '-'
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Section */}
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Current Status</p>
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-sm font-medium mt-2 ${getStatusBadgeColor(
+                        selectedApp.status
+                      )}`}
+                    >
+                      {selectedApp.status.charAt(0).toUpperCase() +
+                        selectedApp.status.slice(1)}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Applied Date</p>
+                    <p className="font-medium text-gray-900 mt-2">
+                      {selectedApp.createdAt
+                        ? new Date(selectedApp.createdAt).toLocaleDateString()
+                        : '-'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Admin Notes */}
+              {selectedApp.adminNotes && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                    Admin Notes
+                  </h3>
+                  <p className="text-gray-700 whitespace-pre-wrap bg-blue-50 p-3 rounded">
+                    {selectedApp.adminNotes}
+                  </p>
+                </div>
+              )}
+
+              {/* Close Button */}
+              <div className="flex justify-end gap-3 border-t pt-4">
+                <Button
+                  onClick={() => setSelectedApp(null)}
+                  variant="outline"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
