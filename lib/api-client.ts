@@ -2,31 +2,35 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/a
 
 export class APIClient {
   static async request(endpoint: string, options: RequestInit = {}) {
-    const url = `${API_BASE_URL}${endpoint}`;
-    const headers = {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    };
+  const url = `${API_BASE_URL}${endpoint}`;
 
-    // Add auth token if available
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+  };
 
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    });
+  // Add auth token if available
+  const token =
+    typeof window !== 'undefined'
+      ? localStorage.getItem('auth_token')
+      : null;
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'API request failed');
-    }
-
-    return await response.json();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
   }
 
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'API request failed');
+  }
+
+  return await response.json();
+}
   // Auth endpoints
   static async login(email: string, password: string) {
     const data = await this.request('/auth/login', {
