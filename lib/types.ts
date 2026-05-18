@@ -1,36 +1,30 @@
 export type ChefApplicationStatus = 'pending' | 'approved' | 'rejected';
+export type ApplicationType = 'chef' | 'business_owner';
 
 export interface ChefApplication {
   _id?: string;
   id?: string;
-  // Personal Information
+  applicationType?: ApplicationType;
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
-  currentRestaurant: string;
-  // Address
-  address1: string;
-  address2?: string;
-  city: string;
-  state: string;
-  // Professional Details
-  jobTitle: string;
-  yearsOfExperience: number;
-  cuisineSpecialties: string[];
-  // Restaurant Information
-  restaurantName: string;
-  restaurantAddress?: string;
-  restaurantWebsite?: string;
-  // Documents
-  professionalProof: string;
-  signature: string;
-  // Status
+  currentRestaurant?: string;
+  website?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  country?: string;
+  jobTitle?: string;
+  professionalEmail?: string;
+  professionalProof?: string;
+  signature?: string;
   status: ChefApplicationStatus;
   statusUpdatedAt?: string;
   adminNotes?: string;
   approvedBy?: string;
-  // Timestamps
   createdAt?: string;
   updatedAt?: string;
 }

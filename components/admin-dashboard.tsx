@@ -39,6 +39,9 @@ export function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState<
     'all' | 'pending' | 'approved' | 'rejected'
   >('all');
+  const [typeFilter, setTypeFilter] = useState<
+    'all' | 'chef' | 'business_owner'
+  >('all');
  const [selectedApp, setSelectedApp] = useState<ChefApplication | null>(null);
   // Redirect if not authenticated
   useEffect(() => {
@@ -60,6 +63,7 @@ export function AdminDashboard() {
         const filters = {
           status: statusFilter !== 'all' ? statusFilter : undefined,
           search: searchTerm || undefined,
+          applicationType: typeFilter !== 'all' ? typeFilter : undefined,
         };
 
         const response = await APIClient.getChefApplications(filters);
@@ -78,7 +82,7 @@ export function AdminDashboard() {
     if (admin) {
       fetchApplications();
     }
-  }, [admin, applications.length, statusFilter, searchTerm]);
+  }, [admin, applications.length, statusFilter, searchTerm, typeFilter]);
 
   // Filter applications
   useEffect(() => {
@@ -98,15 +102,18 @@ export function AdminDashboard() {
       );
     }
 
-    // Status filter
     if (statusFilter !== 'all') {
+      filtered = filtered.filter((app) => app.status === statusFilter);
+    }
+
+    if (typeFilter !== 'all') {
       filtered = filtered.filter(
-        (app) => app.status === statusFilter
+        (app) => (app.applicationType || 'chef') === typeFilter
       );
     }
 
     setFilteredApplications(filtered);
-  }, [applications, searchTerm, statusFilter]);
+  }, [applications, searchTerm, statusFilter, typeFilter]);
 
   const handleLogout = () => {
     logout();
@@ -132,6 +139,16 @@ export function AdminDashboard() {
     } catch (error) {
       console.error('Error refetching applications:', error);
     }
+  };
+
+  const getTypeLabel = (app: ChefApplication) => {
+    return app.applicationType === 'business_owner' ? 'Business Owner' : 'Chef';
+  };
+
+  const getTypeBadgeColor = (app: ChefApplication) => {
+    return app.applicationType === 'business_owner'
+      ? 'bg-orange-100 text-orange-800'
+      : 'bg-blue-100 text-blue-800';
   };
 
   const getStatusBadgeColor = (status: string) => {
@@ -251,7 +268,7 @@ export function AdminDashboard() {
         {/* Filters */}
         <Card className="p-6 mb-6">
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 
             {/* Search */}
             <div>
@@ -291,6 +308,23 @@ export function AdminDashboard() {
               </select>
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-neutral-950 mb-2">
+                Type
+              </label>
+              <select
+                value={typeFilter}
+                onChange={(e) =>
+                  setTypeFilter(e.target.value as 'all' | 'chef' | 'business_owner')
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-neutral-950 bg-white"
+              >
+                <option value="all">All Types</option>
+                <option value="chef">Chef</option>
+                <option value="business_owner">Business Owner</option>
+              </select>
+            </div>
+
             {/* Count */}
             <div className="flex items-end">
               <p className="text-sm text-neutral-950 font-medium">
@@ -318,6 +352,10 @@ export function AdminDashboard() {
 
                   <TableHead className="text-neutral-950 font-semibold">
                     Email
+                  </TableHead>
+
+                  <TableHead className="text-neutral-950 font-semibold">
+                    Type
                   </TableHead>
 
                   <TableHead className="text-neutral-950 font-semibold">
@@ -350,7 +388,7 @@ export function AdminDashboard() {
                 {filteredApplications.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={8}
                       className="text-center py-8 text-neutral-700"
                     >
                       No applications found
@@ -366,6 +404,14 @@ export function AdminDashboard() {
 
                       <TableCell className="text-neutral-950">
                         {app.email}
+                      </TableCell>
+
+                      <TableCell>
+                        <span
+                          className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getTypeBadgeColor(app)}`}
+                        >
+                          {getTypeLabel(app)}
+                        </span>
                       </TableCell>
 
                       <TableCell className="text-neutral-950">

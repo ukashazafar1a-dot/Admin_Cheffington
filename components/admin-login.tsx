@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,20 +9,29 @@ import { useAuth } from '@/lib/auth-context';
 
 export function AdminLogin() {
   const router = useRouter();
-  const { login, isLoading, error: authError } = useAuth();
+  const { login, error: authError } = useAuth();
+  const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsSubmitting(true);
 
     try {
       await login(email, password);
       router.push('/Admin/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -34,47 +43,59 @@ export function AdminLogin() {
           <p className="text-gray-600">Access the Cheffington Admin Dashboard</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@cheffington.com"
-              className={error ? 'border-red-500' : ''}
-              disabled={isLoading}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              className={error ? 'border-red-500' : ''}
-              disabled={isLoading}
-            />
-          </div>
-
-          {(error || authError) && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error || authError}
-            </div>
-          )}
-
-          <Button
-            type="submit"
-            disabled={isLoading || !email || !password}
-            className="w-full bg-blue-600 hover:bg-blue-700"
+        {!mounted ? (
+          <p className="text-gray-500 text-sm">Loading...</p>
+        ) : (
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-6"
+            suppressHydrationWarning
           >
-            {isLoading ? 'Logging in...' : 'Login'}
-          </Button>
-        </form>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email
+              </label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@cheffington.com"
+                className={error ? 'border-red-500' : ''}
+                disabled={isSubmitting}
+                autoComplete="email"
+              />
+            </div>
 
-        
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                className={error ? 'border-red-500' : ''}
+                disabled={isSubmitting}
+                autoComplete="current-password"
+              />
+            </div>
+
+            {(error || authError) && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                {error || authError}
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              disabled={isSubmitting || !email || !password}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              {isSubmitting ? 'Logging in...' : 'Login'}
+            </Button>
+          </form>
+        )}
       </Card>
     </div>
   );
