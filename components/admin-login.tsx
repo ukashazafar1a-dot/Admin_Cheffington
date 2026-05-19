@@ -27,8 +27,8 @@ export function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center px-4">
-      <Card className="w-full max-w-md p-8 border-2 border-blue-300">
+    <div className="min-h-screen bg-[#fff1e1] flex items-center justify-center px-4">
+      <Card className="w-full max-w-md p-8 border-2 border-[#FF8400]">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Login</h1>
           <p className="text-gray-600">Access the Cheffington Admin Dashboard</p>
@@ -68,7 +68,7 @@ export function AdminLogin() {
           <Button
             type="submit"
             disabled={isLoading || !email || !password}
-            className="w-full bg-blue-600 hover:bg-blue-700"
+            className="w-full bg-[#ff8400] hover:bg-[#FF8400]/90"
           >
             {isLoading ? 'Logging in...' : 'Login'}
           </Button>
