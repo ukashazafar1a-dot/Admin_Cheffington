@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,21 @@ import {
 import { useAuth } from '@/lib/auth-context';
 import { ChefApplication } from '@/lib/types';
 import { APIClient } from '@/lib/api-client';
+import {
+  buildApplicationQueryFilters,
+  type StatusFilter,
+  type TypeFilter,
+} from '@/lib/application-filters';
 import { ApplicationDetailsModal } from './application-details-modal';
+
+type DashboardStats = {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+};
+
+const SEARCH_DEBOUNCE_MS = 350;
 
 export function AdminDashboard() {
   const router = useRouter();
@@ -27,22 +41,27 @@ export function AdminDashboard() {
   const { admin, logout, isLoading: authLoading } = useAuth();
 
   const [applications, setApplications] = useState<ChefApplication[]>([]);
-  const [filteredApplications, setFilteredApplications] = useState<
-    ChefApplication[]
-  >([]);
+  const [stats, setStats] = useState<DashboardStats>({
+    total: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+  });
 
   const [loading, setLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  const [statusFilter, setStatusFilter] = useState<
-    'all' | 'pending' | 'approved' | 'rejected'
-  >('all');
-  const [typeFilter, setTypeFilter] = useState<
-    'all' | 'chef' | 'business_owner'
-  >('all');
- const [selectedApp, setSelectedApp] = useState<ChefApplication | null>(null);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+
+  const [selectedApp, setSelectedApp] = useState<ChefApplication | null>(null);
+
+  const fetchRequestId = useRef(0);
+  const hasLoadedOnce = useRef(false);
+
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !admin) {
@@ -50,95 +69,110 @@ export function AdminDashboard() {
     }
   }, [admin, authLoading, router]);
 
-  // Fetch applications
+  // Debounce search input
   useEffect(() => {
-    const fetchApplications = async () => {
-      try {
-        if (applications.length === 0) {
-          setLoading(true);
-        } else {
-          setIsFetching(true);
-        }
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch(searchTerm.trim());
+    }, SEARCH_DEBOUNCE_MS);
 
-        const filters = {
-          status: statusFilter !== 'all' ? statusFilter : undefined,
-          search: searchTerm || undefined,
-          applicationType: typeFilter !== 'all' ? typeFilter : undefined,
-        };
+    return () => window.clearTimeout(timer);
+  }, [searchTerm]);
 
-        const response = await APIClient.getChefApplications(filters);
+  const queryFilters = buildApplicationQueryFilters({
+    search: debouncedSearch,
+    status: statusFilter,
+    type: typeFilter,
+  });
 
-        if (response.success) {
-          setApplications(response.data || []);
-        }
-      } catch (error) {
-        console.error('Error fetching applications:', error);
-      } finally {
-        setLoading(false);
-        setIsFetching(false);
-      }
-    };
+  const fetchApplications = useCallback(async () => {
+    const requestId = ++fetchRequestId.current;
 
-    if (admin) {
-      fetchApplications();
-    }
-  }, [admin, applications.length, statusFilter, searchTerm, typeFilter]);
-
-  // Filter applications
-  useEffect(() => {
-    let filtered = applications;
-
-    // Search filter
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (app) =>
-          `${app.firstName} ${app.lastName}`
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          app.currentRestaurant
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase())
-      );
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter((app) => app.status === statusFilter);
-    }
-
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(
-        (app) => (app.applicationType || 'chef') === typeFilter
-      );
-    }
-
-    setFilteredApplications(filtered);
-  }, [applications, searchTerm, statusFilter, typeFilter]);
-
-  const handleLogout = () => {
-    logout();
-    router.push('/admin');
-  };
-  const handleApplicationUpdate = async () => {
-    // Refetch applications after update
     try {
-      const filters = {
-        status: statusFilter !== 'all' ? statusFilter : undefined,
-        search: searchTerm || undefined,
-      };
+      if (!hasLoadedOnce.current) {
+        setLoading(true);
+      } else {
+        setIsFetching(true);
+      }
 
-      const response = await APIClient.getChefApplications(filters);
+      const response = await APIClient.getChefApplications(queryFilters);
+
+      if (requestId !== fetchRequestId.current) return;
 
       if (response.success) {
         setApplications(response.data || []);
-      } else {
-        console.error('Failed to refresh applications after update');
+        hasLoadedOnce.current = true;
+      }
+    } catch (error) {
+      if (requestId === fetchRequestId.current) {
+        console.error('Error fetching applications:', error);
+      }
+    } finally {
+      if (requestId === fetchRequestId.current) {
+        setLoading(false);
+        setIsFetching(false);
+      }
+    }
+  }, [queryFilters.search, queryFilters.status, queryFilters.applicationType]);
+
+  // Load global stats once
+  useEffect(() => {
+    if (!admin) return;
+
+    const loadStats = async () => {
+      try {
+        const response = await APIClient.getDashboardStats();
+        if (response.success && response.data) {
+          setStats({
+            total: response.data.total ?? 0,
+            pending: response.data.pending ?? 0,
+            approved: response.data.approved ?? 0,
+            rejected: response.data.rejected ?? 0,
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+      }
+    };
+
+    loadStats();
+  }, [admin]);
+
+  // Fetch filtered applications when filters change
+  useEffect(() => {
+    if (admin) {
+      fetchApplications();
+    }
+  }, [admin, fetchApplications]);
+
+  const refreshAfterUpdate = async () => {
+    try {
+      const [appsResponse, statsResponse] = await Promise.all([
+        APIClient.getChefApplications(queryFilters),
+        APIClient.getDashboardStats(),
+      ]);
+
+      if (appsResponse.success) {
+        setApplications(appsResponse.data || []);
+      }
+
+      if (statsResponse.success && statsResponse.data) {
+        setStats({
+          total: statsResponse.data.total ?? 0,
+          pending: statsResponse.data.pending ?? 0,
+          approved: statsResponse.data.approved ?? 0,
+          rejected: statsResponse.data.rejected ?? 0,
+        });
       }
 
       setSelectedApp(null);
     } catch (error) {
       console.error('Error refetching applications:', error);
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    router.push('/admin');
   };
 
   const getTypeLabel = (app: ChefApplication) => {
@@ -163,6 +197,9 @@ export function AdminDashboard() {
         return 'bg-yellow-100 text-yellow-800';
     }
   };
+
+  const hasActiveFilters =
+    Boolean(debouncedSearch) || statusFilter !== 'all' || typeFilter !== 'all';
 
   // Loading Screen
   if (authLoading || loading) {
@@ -217,7 +254,7 @@ export function AdminDashboard() {
             </p>
 
             <p className="text-3xl font-bold text-gray-900 mt-2">
-              {applications.length}
+              {stats.total}
             </p>
           </Card>
 
@@ -227,11 +264,7 @@ export function AdminDashboard() {
             </p>
 
             <p className="text-3xl font-bold text-yellow-600 mt-2">
-              {
-                applications.filter(
-                  (a) => a.status === 'pending'
-                ).length
-              }
+              {stats.pending}
             </p>
           </Card>
 
@@ -241,11 +274,7 @@ export function AdminDashboard() {
             </p>
 
             <p className="text-3xl font-bold text-green-600 mt-2">
-              {
-                applications.filter(
-                  (a) => a.status === 'approved'
-                ).length
-              }
+              {stats.approved}
             </p>
           </Card>
 
@@ -255,11 +284,7 @@ export function AdminDashboard() {
             </p>
 
             <p className="text-3xl font-bold text-red-600 mt-2">
-              {
-                applications.filter(
-                  (a) => a.status === 'rejected'
-                ).length
-              }
+              {stats.rejected}
             </p>
           </Card>
 
@@ -278,7 +303,7 @@ export function AdminDashboard() {
 
               <Input
                 type="text"
-                placeholder="Search by name, email, or restaurant..."
+                placeholder="Search name, email, restaurant, job title..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="text-neutral-950 placeholder:text-neutral-600"
@@ -294,7 +319,7 @@ export function AdminDashboard() {
               <select
                 value={statusFilter}
                 onChange={(e) =>
-                  setStatusFilter(e.target.value as any)
+                  setStatusFilter(e.target.value as StatusFilter)
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-neutral-950 bg-white"
               >
@@ -315,7 +340,7 @@ export function AdminDashboard() {
               <select
                 value={typeFilter}
                 onChange={(e) =>
-                  setTypeFilter(e.target.value as 'all' | 'chef' | 'business_owner')
+                  setTypeFilter(e.target.value as TypeFilter)
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-neutral-950 bg-white"
               >
@@ -328,8 +353,14 @@ export function AdminDashboard() {
             {/* Count */}
             <div className="flex items-end">
               <p className="text-sm text-neutral-950 font-medium">
-                Showing {filteredApplications.length} of{' '}
-                {applications.length} applications
+                {isFetching ? (
+                  'Updating results...'
+                ) : (
+                  <>
+                    Showing {applications.length} of {stats.total} applications
+                    {hasActiveFilters ? ' (filtered)' : ''}
+                  </>
+                )}
               </p>
             </div>
 
@@ -385,7 +416,7 @@ export function AdminDashboard() {
 
               <TableBody>
 
-                {filteredApplications.length === 0 ? (
+                {applications.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={8}
@@ -395,7 +426,7 @@ export function AdminDashboard() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredApplications.map((app) => (
+                  applications.map((app) => (
                     <TableRow key={app._id}>
 
                       <TableCell className="font-medium text-neutral-950">
@@ -470,7 +501,7 @@ export function AdminDashboard() {
         <ApplicationDetailsModal
           application={selectedApp}
           onClose={() => setSelectedApp(null)}
-          onUpdate={handleApplicationUpdate}
+          onUpdate={refreshAfterUpdate}
         />
       )}
     </div>
