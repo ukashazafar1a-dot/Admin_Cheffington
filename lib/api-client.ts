@@ -70,15 +70,23 @@ export class APIClient {
     });
   }
 
-  static async getChefApplications(filters?: { status?: string; search?: string; sortBy?: string; order?: string }) {
+  static async getChefApplications(filters?: {
+    status?: string;
+    search?: string;
+    applicationType?: 'chef' | 'business_owner';
+    sortBy?: string;
+    order?: string;
+  }) {
     let url = '/chef-applications';
     if (filters) {
       const params = new URLSearchParams();
       if (filters.status) params.append('status', filters.status);
       if (filters.search) params.append('search', filters.search);
+      if (filters.applicationType) params.append('applicationType', filters.applicationType);
       if (filters.sortBy) params.append('sortBy', filters.sortBy);
       if (filters.order) params.append('order', filters.order);
-      url += `?${params.toString()}`;
+      const qs = params.toString();
+      if (qs) url += `?${qs}`;
     }
     return await this.request(url);
   }

@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { ChefHat, LayoutDashboard, Menu, Utensils, X } from 'lucide-react'
+import { useAuth } from '@/lib/auth-context'
 
 export default function DashboardLayout({
   children,
@@ -12,10 +13,33 @@ export default function DashboardLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const pathname = usePathname()
+  const router = useRouter()
+  const { admin, logout, isLoading, isAuthenticated } = useAuth()
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/Admin')
+    }
+  }, [isLoading, isAuthenticated, router])
+
+  const handleLogout = () => {
+    logout()
+    router.push('/Admin')
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-neutral-800">Loading...</p>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) return null
 
   const menuItems = [
     { href: '/Admin/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-    { href: '/Admin/dashboard/chef-applications', label: 'Chef Applications', icon: <ChefHat size={20} /> },
+    { href: '/Admin/dashboard/chef-applications', label: 'Applications', icon: <ChefHat size={20} /> },
     { href: '/Admin/dashboard/restaurants', label: 'Restaurants', icon: <Utensils size={20} /> },
   ]
 
@@ -67,19 +91,40 @@ export default function DashboardLayout({
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-800">
+        <div className="p-4 border-t border-slate-800 space-y-3">
+          {sidebarOpen && admin && (
+            <p className="text-xs text-slate-600 truncate">{admin.name}</p>
+          )}
+          <button
+            type="button"
+            onClick={handleLogout}
+            className={`w-full px-3 py-2 rounded border border-red-300 text-red-600 text-sm font-medium hover:bg-red-50 transition-colors ${
+              !sidebarOpen ? 'px-2 text-xs' : ''
+            }`}
+            title="Logout"
+          >
+            {sidebarOpen ? 'Logout' : 'Out'}
+          </button>
           {sidebarOpen && (
             <p className="text-xs text-slate-400">© 2024 Admin Panel</p>
           )}
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        <div className="p-8">
-          {children}
-        </div>
-      </main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <header className="bg-white border-b border-gray-200 px-8 py-4 flex justify-end items-center shrink-0">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="px-4 py-2 rounded border border-red-300 text-red-600 text-sm font-semibold hover:bg-red-50 transition-colors"
+          >
+            Logout
+          </button>
+        </header>
+        <main className="flex-1 overflow-auto">
+          <div className="p-8">{children}</div>
+        </main>
+      </div>
     </div>
   )
 }

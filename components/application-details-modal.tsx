@@ -163,6 +163,15 @@ export function ApplicationDetailsModal({
         <DetailSection title="Personal Information">
 
           <DetailRow
+            label="Application Type"
+            value={
+              application.applicationType === 'business_owner'
+                ? 'Business Owner'
+                : 'Chef'
+            }
+          />
+
+          <DetailRow
             label="Full Name"
             value={`${application.firstName} ${application.lastName}`}
           />
