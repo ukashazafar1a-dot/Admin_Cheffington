@@ -446,15 +446,26 @@ export function AdminDashboard() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Experience</p>
+                    <p className="text-sm text-gray-600">Website</p>
                     <p className="font-medium text-gray-900">
-                      {selectedApp.yearsOfExperience || '-'} years
+                      {selectedApp.website ? (
+                        <a
+                          href={selectedApp.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline"
+                        >
+                          {selectedApp.website}
+                        </a>
+                      ) : (
+                        '-'
+                      )}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Cuisine Specialty</p>
+                    <p className="text-sm text-gray-600">Professional Email</p>
                     <p className="font-medium text-gray-900">
-                      {selectedApp.cuisineSpecialties?.join(', ') || '-'}
+                      {selectedApp.professionalEmail || '-'}
                     </p>
                   </div>
                 </div>
@@ -469,13 +480,13 @@ export function AdminDashboard() {
                   <div>
                     <p className="text-sm text-gray-600">Address 1</p>
                     <p className="font-medium text-gray-900">
-                      {selectedApp.address1 || '-'}
+                      {selectedApp.addressLine1 || '-'}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Address 2</p>
                     <p className="font-medium text-gray-900">
-                      {selectedApp.address2 || '-'}
+                      {selectedApp.addressLine2 || '-'}
                     </p>
                   </div>
                   <div>
@@ -490,42 +501,16 @@ export function AdminDashboard() {
                       {selectedApp.state || '-'}
                     </p>
                   </div>
-                </div>
-              </div>
-
-              {/* Restaurant Information */}
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                  Restaurant Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-600">Restaurant Name</p>
+                    <p className="text-sm text-gray-600">Zip Code</p>
                     <p className="font-medium text-gray-900">
-                      {selectedApp.restaurantName || '-'}
+                      {selectedApp.zipCode || '-'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Restaurant Address</p>
+                    <p className="text-sm text-gray-600">Country</p>
                     <p className="font-medium text-gray-900">
-                      {selectedApp.restaurantAddress || '-'}
-                    </p>
-                  </div>
-                  <div className="col-span-1 md:col-span-2">
-                    <p className="text-sm text-gray-600">Restaurant Website</p>
-                    <p className="font-medium text-gray-900">
-                      {selectedApp.restaurantWebsite ? (
-                        <a
-                          href={selectedApp.restaurantWebsite}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline"
-                        >
-                          {selectedApp.restaurantWebsite}
-                        </a>
-                      ) : (
-                        '-'
-                      )}
+                      {selectedApp.country || '-'}
                     </p>
                   </div>
                 </div>

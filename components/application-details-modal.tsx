@@ -193,13 +193,13 @@ export function ApplicationDetailsModal({
 
           <DetailRow
             label="Address Line 1"
-            value={application.address1}
+            value={application.addressLine1}
           />
 
-          {application.address2 && (
+          {application.addressLine2 && (
             <DetailRow
               label="Address Line 2"
-              value={application.address2}
+              value={application.addressLine2}
             />
           )}
 
@@ -211,6 +211,16 @@ export function ApplicationDetailsModal({
           <DetailRow
             label="State"
             value={application.state}
+          />
+
+          <DetailRow
+            label="Zip Code"
+            value={application.zipCode}
+          />
+
+          <DetailRow
+            label="Country"
+            value={application.country}
           />
 
         </DetailSection>
@@ -229,52 +239,26 @@ export function ApplicationDetailsModal({
           />
 
           <DetailRow
-            label="Years of Experience"
-            value={`${application.yearsOfExperience} years`}
-          />
-
-          <DetailRow
-            label="Cuisine Specialties"
+            label="Website"
             value={
-              application.cuisineSpecialties?.length
-                ? application.cuisineSpecialties.join(', ')
-                : '-'
-            }
-          />
-
-        </DetailSection>
-
-        {/* Restaurant Information */}
-        <DetailSection title="Restaurant Information">
-
-          <DetailRow
-            label="Restaurant Name"
-            value={application.restaurantName}
-          />
-
-          <DetailRow
-            label="Restaurant Address"
-            value={
-              application.restaurantAddress || '-'
-            }
-          />
-
-          <DetailRow
-            label="Restaurant Website"
-            value={
-              application.restaurantWebsite ? (
+              application.website ? (
                 <a
-                  href={application.restaurantWebsite}
+                  href={application.website}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 underline"
                 >
-                  Visit Website
+                  {application.website}
                 </a>
               ) : (
                 '-'
               )
             }
+          />
+
+          <DetailRow
+            label="Professional Email"
+            value={application.professionalEmail}
           />
 
         </DetailSection>
