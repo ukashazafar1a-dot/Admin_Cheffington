@@ -20,6 +20,7 @@ export interface ChefApplication {
   jobTitle?: string;
   professionalEmail?: string;
   professionalProof?: string;
+  applicationDocuments?: string[];
   signature?: string;
   status: ChefApplicationStatus;
   statusUpdatedAt?: string;

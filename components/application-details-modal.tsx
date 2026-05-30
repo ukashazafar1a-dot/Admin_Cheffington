@@ -268,20 +268,33 @@ export function ApplicationDetailsModal({
 
           <DetailRow
             label="Professional Proof"
-            value={
-              application.professionalProof ? (
-                <a
-                  href={application.professionalProof}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 underline"
-                >
-                  View Document
-                </a>
-              ) : (
-                '-'
-              )
-            }
+            value={(() => {
+              const docUrls =
+                application.applicationDocuments?.length
+                  ? application.applicationDocuments
+                  : application.professionalProof
+                    ? [application.professionalProof]
+                    : [];
+
+              if (docUrls.length === 0) return '-';
+
+              return (
+                <ul className="space-y-2">
+                  {docUrls.map((url, index) => (
+                    <li key={`${url}-${index}`}>
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
+                      >
+                        View document {docUrls.length > 1 ? index + 1 : ''}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              );
+            })()}
           />
 
           <DetailRow
