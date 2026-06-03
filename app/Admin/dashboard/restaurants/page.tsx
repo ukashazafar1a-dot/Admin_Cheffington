@@ -1,4 +1,4 @@
-import { AdminDashboard } from '@/components/admin-dashboard';
+import { RestaurantsDashboard } from '@/components/restaurants-dashboard';
 
 export const metadata = {
   title: 'Restaurants - Cheffington Admin',
@@ -6,5 +6,5 @@ export const metadata = {
 };
 
 export default function RestaurantsPage() {
-  return <AdminDashboard />;
+  return <RestaurantsDashboard />;
 }

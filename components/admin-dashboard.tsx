@@ -247,47 +247,81 @@ export function AdminDashboard() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <button
+            type="button"
+            onClick={() => setStatusFilter('all')}
+            className="text-left"
+          >
+            <Card
+              className={`p-6 transition ${
+                statusFilter === 'all' ? 'ring-2 ring-[#ff8400]' : ''
+              }`}
+            >
+              <p className="text-neutral-950 text-sm font-medium">
+                Total Applications
+              </p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">
+                {stats.total}
+              </p>
+            </Card>
+          </button>
 
-          <Card className="p-6">
-            <p className="text-neutral-950 text-sm font-medium">
-              Total Applications
-            </p>
+          <button
+            type="button"
+            onClick={() => setStatusFilter('pending')}
+            className="text-left"
+          >
+            <Card
+              className={`p-6 transition ${
+                statusFilter === 'pending' ? 'ring-2 ring-[#ff8400]' : ''
+              }`}
+            >
+              <p className="text-neutral-950 text-sm font-medium">
+                Pending Review
+              </p>
+              <p className="text-3xl font-bold text-yellow-600 mt-2">
+                {stats.pending}
+              </p>
+            </Card>
+          </button>
 
-            <p className="text-3xl font-bold text-gray-900 mt-2">
-              {stats.total}
-            </p>
-          </Card>
+          <button
+            type="button"
+            onClick={() => setStatusFilter('approved')}
+            className="text-left"
+          >
+            <Card
+              className={`p-6 transition ${
+                statusFilter === 'approved' ? 'ring-2 ring-[#ff8400]' : ''
+              }`}
+            >
+              <p className="text-neutral-950 text-sm font-medium">
+                Approved
+              </p>
+              <p className="text-3xl font-bold text-green-600 mt-2">
+                {stats.approved}
+              </p>
+            </Card>
+          </button>
 
-          <Card className="p-6">
-            <p className="text-neutral-950 text-sm font-medium">
-              Pending Review
-            </p>
-
-            <p className="text-3xl font-bold text-yellow-600 mt-2">
-              {stats.pending}
-            </p>
-          </Card>
-
-          <Card className="p-6">
-            <p className="text-neutral-950 text-sm font-medium">
-              Approved
-            </p>
-
-            <p className="text-3xl font-bold text-green-600 mt-2">
-              {stats.approved}
-            </p>
-          </Card>
-
-          <Card className="p-6">
-            <p className="text-neutral-950 text-sm font-medium">
-              Rejected
-            </p>
-
-            <p className="text-3xl font-bold text-red-600 mt-2">
-              {stats.rejected}
-            </p>
-          </Card>
-
+          <button
+            type="button"
+            onClick={() => setStatusFilter('rejected')}
+            className="text-left"
+          >
+            <Card
+              className={`p-6 transition ${
+                statusFilter === 'rejected' ? 'ring-2 ring-[#ff8400]' : ''
+              }`}
+            >
+              <p className="text-neutral-950 text-sm font-medium">
+                Rejected
+              </p>
+              <p className="text-3xl font-bold text-red-600 mt-2">
+                {stats.rejected}
+              </p>
+            </Card>
+          </button>
         </div>
 
         {/* Filters */}

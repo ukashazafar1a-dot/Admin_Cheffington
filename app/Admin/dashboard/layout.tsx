@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { ChefHat, LayoutDashboard, Menu, Utensils, X } from 'lucide-react'
+import { ChefHat, LayoutDashboard, Menu, ShieldCheck, Utensils, X } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 
 export default function DashboardLayout({
@@ -41,6 +41,7 @@ export default function DashboardLayout({
     { href: '/Admin/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { href: '/Admin/dashboard/chef-applications', label: 'Applications', icon: <ChefHat size={20} /> },
     { href: '/Admin/dashboard/restaurants', label: 'Restaurants', icon: <Utensils size={20} /> },
+    { href: '/Admin/dashboard/restaurant-claims', label: 'Restaurant Claims', icon: <ShieldCheck size={20} /> },
   ]
 
  const isActive = (href: string) => pathname === href

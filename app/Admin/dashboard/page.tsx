@@ -1,181 +1,223 @@
-'use client'
+'use client';
 
-import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { APIClient } from '@/lib/api-client';
 
-const chartData = [
-  { month: 'Jan', sales: 4000, revenue: 2400 },
-  { month: 'Feb', sales: 3000, revenue: 1398 },
-  { month: 'Mar', sales: 2000, revenue: 9800 },
-  { month: 'Apr', sales: 2780, revenue: 3908 },
-  { month: 'May', sales: 1890, revenue: 4800 },
-  { month: 'Jun', sales: 2390, revenue: 3800 },
-]
-
-const barData = [
-  { name: 'Monday', orders: 120 },
-  { name: 'Tuesday', orders: 150 },
-  { name: 'Wednesday', orders: 130 },
-  { name: 'Thursday', orders: 170 },
-  { name: 'Friday', orders: 200 },
-  { name: 'Saturday', orders: 180 },
-  { name: 'Sunday', orders: 160 },
-]
+type DashboardData = {
+  applications: { total: number; pending: number; approved: number; rejected: number };
+  restaurants: { total: number; published: number; draft: number; archived: number };
+  claims: { total: number; pending: number; approved: number; rejected: number };
+  recentApplications: Array<{ name: string; email: string; status: string; createdAt?: string }>;
+  recentClaims: Array<{ restaurant: string; claimantEmail: string; status: string; createdAt?: string }>;
+};
 
 export default function DashboardPage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [data, setData] = useState<DashboardData>({
+    applications: { total: 0, pending: 0, approved: 0, rejected: 0 },
+    restaurants: { total: 0, published: 0, draft: 0, archived: 0 },
+    claims: { total: 0, pending: 0, approved: 0, rejected: 0 },
+    recentApplications: [],
+    recentClaims: [],
+  });
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        const [
+          appStatsRes,
+          appListRes,
+          restaurantRes,
+          claimPendingRes,
+          claimApprovedRes,
+          claimRejectedRes,
+          claimRecentRes,
+        ] = await Promise.all([
+          APIClient.getDashboardStats(),
+          APIClient.getChefApplications({ sortBy: 'createdAt', order: 'desc' }),
+          APIClient.getAdminRestaurants({ limit: 1 }),
+          APIClient.getRestaurantClaims({ status: 'pending', limit: 1 }),
+          APIClient.getRestaurantClaims({ status: 'approved', limit: 1 }),
+          APIClient.getRestaurantClaims({ status: 'rejected', limit: 1 }),
+          APIClient.getRestaurantClaims({ page: 1, limit: 5 }),
+        ]);
+
+        const pending = claimPendingRes.count ?? 0;
+        const approved = claimApprovedRes.count ?? 0;
+        const rejected = claimRejectedRes.count ?? 0;
+
+        setData({
+          applications: {
+            total: appStatsRes?.data?.total ?? 0,
+            pending: appStatsRes?.data?.pending ?? 0,
+            approved: appStatsRes?.data?.approved ?? 0,
+            rejected: appStatsRes?.data?.rejected ?? 0,
+          },
+          restaurants: {
+            total: restaurantRes?.stats?.total ?? 0,
+            published: restaurantRes?.stats?.published ?? 0,
+            draft: restaurantRes?.stats?.draft ?? 0,
+            archived: restaurantRes?.stats?.archived ?? 0,
+          },
+          claims: {
+            total: pending + approved + rejected,
+            pending,
+            approved,
+            rejected,
+          },
+          recentApplications: (appListRes?.data || []).slice(0, 5).map((app: any) => ({
+            name: `${app.firstName || ''} ${app.lastName || ''}`.trim() || '-',
+            email: app.email || '-',
+            status: app.status || '-',
+            createdAt: app.createdAt,
+          })),
+          recentClaims: (claimRecentRes?.data || []).slice(0, 5).map((claim: any) => ({
+            restaurant: claim.restaurantId?.name || '-',
+            claimantEmail: claim.claimantEmail || '-',
+            status: claim.status || '-',
+            createdAt: claim.createdAt,
+          })),
+        });
+      } catch (loadError) {
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : 'Failed to load dashboard data'
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, []);
+
+  const formatDate = (value?: string) => {
+    if (!value) return '-';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '-' : date.toLocaleDateString();
+  };
+
+  if (loading) {
+    return <p className="text-neutral-800">Loading dashboard data...</p>;
+  }
+
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-        <p className="text-slate-600 mt-2">Welcome back! Here&apos;s your business overview.</p>
+        <p className="mt-2 text-slate-600">Live overview from real backend data.</p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">
-              Total Chefs
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-slate-900">156</div>
-            <p className="text-xs text-slate-500 mt-1">+12 this month</p>
-          </CardContent>
-        </Card>
+      {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">
-              Total Restaurants
+              Applications
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-900">42</div>
-            <p className="text-xs text-slate-500 mt-1">+3 this month</p>
+            <div className="text-3xl font-bold text-slate-900">{data.applications.total}</div>
+            <p className="mt-1 text-xs text-slate-500">
+              Pending {data.applications.pending} • Approved {data.applications.approved} •
+              Rejected {data.applications.rejected}
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">
-              Total Sales
+              Restaurants
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-900">$124.5K</div>
-            <p className="text-xs text-slate-500 mt-1">+8.2% from last month</p>
+            <div className="text-3xl font-bold text-slate-900">{data.restaurants.total}</div>
+            <p className="mt-1 text-xs text-slate-500">
+              Published {data.restaurants.published} • Draft {data.restaurants.draft} •
+              Archived {data.restaurants.archived}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">
+              Restaurant Claims
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-slate-900">{data.claims.total}</div>
+            <p className="mt-1 text-xs text-slate-500">
+              Pending {data.claims.pending} • Approved {data.claims.approved} •
+              Rejected {data.claims.rejected}
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Line Chart */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Sales & Revenue Trend</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="sales"
-                  stroke="green"
-                  strokeWidth={2}
-                  name="Sales"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#ff8400"
-                  strokeWidth={2}
-                  name="Revenue"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Bar Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Orders by Day</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={barData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="orders" fill="#ff8400" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Additional Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Performing Restaurants</CardTitle>
+            <CardTitle>Recent Applications</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {[
-                { name: 'Golden Fork', orders: 320 },
-                { name: 'Spice House', orders: 285 },
-                { name: 'Ocean Breeze', orders: 256 },
-              ].map((restaurant) => (
-                <div key={restaurant.name} className="flex justify-between items-center">
-                  <span className="text-slate-700">{restaurant.name}</span>
-                  <span className="font-semibold text-slate-900">{restaurant.orders}</span>
-                </div>
-              ))}
+              {data.recentApplications.length ? (
+                data.recentApplications.map((app, index) => (
+                  <div key={`${app.email}-${index}`} className="flex justify-between gap-4 text-sm">
+                    <div>
+                      <p className="font-medium text-slate-900">{app.name}</p>
+                      <p className="text-slate-600">{app.email}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="capitalize text-slate-800">{app.status}</p>
+                      <p className="text-slate-500">{formatDate(app.createdAt)}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-slate-600">No recent applications.</p>
+              )}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <CardTitle>Recent Claim Requests</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {[
-                'New chef application from John D.',
-                'Restaurant &quot;The Grill&quot; added',
-                '150 orders completed today',
-              ].map((activity, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-blue-600 rounded-full mt-1.5 flex-shrink-0" />
-                  <p className="text-sm text-slate-700">{activity}</p>
-                </div>
-              ))}
+              {data.recentClaims.length ? (
+                data.recentClaims.map((claim, index) => (
+                  <div
+                    key={`${claim.restaurant}-${claim.claimantEmail}-${index}`}
+                    className="flex justify-between gap-4 text-sm"
+                  >
+                    <div>
+                      <p className="font-medium text-slate-900">{claim.restaurant}</p>
+                      <p className="text-slate-600">{claim.claimantEmail}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="capitalize text-slate-800">{claim.status}</p>
+                      <p className="text-slate-500">{formatDate(claim.createdAt)}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-slate-600">No recent claim requests.</p>
+              )}
             </div>
           </CardContent>
         </Card>
       </div>
     </div>
-  )
+  );
 }

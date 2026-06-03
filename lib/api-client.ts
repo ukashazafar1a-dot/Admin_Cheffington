@@ -106,6 +106,86 @@ export class APIClient {
     return await this.request('/stats/overview');
   }
 
+  static async getRestaurantClaims(filters?: {
+    status?: 'pending' | 'approved' | 'rejected';
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    let url = '/restaurant-claims';
+    if (filters) {
+      const params = new URLSearchParams();
+      if (filters.status) params.append('status', filters.status);
+      if (filters.search) params.append('search', filters.search);
+      if (typeof filters.page === 'number') params.append('page', String(filters.page));
+      if (typeof filters.limit === 'number') params.append('limit', String(filters.limit));
+      const qs = params.toString();
+      if (qs) url += `?${qs}`;
+    }
+    return await this.request(url);
+  }
+
+  static async getAdminRestaurants(filters?: {
+    status?: 'draft' | 'published' | 'archived';
+    search?: string;
+    city?: string;
+    claimed?: 'claimed' | 'unclaimed';
+    owner?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    let url = '/admin/restaurants';
+    if (filters) {
+      const params = new URLSearchParams();
+      if (filters.status) params.append('status', filters.status);
+      if (filters.search) params.append('search', filters.search);
+      if (filters.city) params.append('city', filters.city);
+      if (filters.claimed) params.append('claimed', filters.claimed);
+      if (filters.owner) params.append('owner', filters.owner);
+      if (typeof filters.page === 'number') params.append('page', String(filters.page));
+      if (typeof filters.limit === 'number') params.append('limit', String(filters.limit));
+      const qs = params.toString();
+      if (qs) url += `?${qs}`;
+    }
+    return await this.request(url);
+  }
+
+  static async getAdminRestaurant(id: string) {
+    return await this.request(`/admin/restaurants/${id}`);
+  }
+
+  static async updateAdminRestaurantStatus(
+    id: string,
+    status: 'draft' | 'published' | 'archived'
+  ) {
+    return await this.request(`/admin/restaurants/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  static async reassignAdminRestaurantOwner(
+    id: string,
+    body: { ownerId?: string; ownerEmail?: string }
+  ) {
+    return await this.request(`/admin/restaurants/${id}/owner`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  static async updateRestaurantClaimStatus(
+    id: string,
+    status: 'approved' | 'rejected',
+    adminNotes?: string,
+    rejectionEmailMessage?: string
+  ) {
+    return await this.request(`/restaurant-claims/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, adminNotes, rejectionEmailMessage }),
+    });
+  }
+
   // Helper to normalize _id to id
   static normalizeApplication(app: any): any {
     if (app._id && !app.id) {
