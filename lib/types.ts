@@ -30,6 +30,14 @@ export interface ChefApplication {
   updatedAt?: string;
 }
 
+export interface BannedPhrase {
+  _id: string;
+  phrase: string;
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
+}
+
 export type RestaurantClaimStatus = 'pending' | 'approved' | 'rejected';
 
 export interface RestaurantClaim {
