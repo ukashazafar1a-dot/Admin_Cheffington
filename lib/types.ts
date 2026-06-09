@@ -38,6 +38,33 @@ export interface BannedPhrase {
   createdBy?: string;
 }
 
+export interface FlaggedReviewRestaurant {
+  id: string;
+  name: string;
+  city?: string;
+  state?: string;
+}
+
+export interface FlaggedReviewChef {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+}
+
+export interface FlaggedReview {
+  _id: string;
+  title?: string;
+  comment: string;
+  status: 'flagged';
+  flaggedReason?: string;
+  adminNotes?: string;
+  createdAt: string;
+  updatedAt?: string;
+  restaurant?: FlaggedReviewRestaurant;
+  chef?: FlaggedReviewChef;
+}
+
 export type RestaurantClaimStatus = 'pending' | 'approved' | 'rejected';
 
 export interface RestaurantClaim {

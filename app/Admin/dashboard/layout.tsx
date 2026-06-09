@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { ChefHat, LayoutDashboard, Menu, ShieldCheck, ShieldBan, Utensils, X } from 'lucide-react'
+import { ChefHat, Flag, LayoutDashboard, Menu, ShieldCheck, ShieldBan, Utensils, X } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 
 export default function DashboardLayout({
@@ -29,7 +29,7 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-[#fff1e1]">
         <p className="text-neutral-800">Loading...</p>
       </div>
     )
@@ -43,20 +43,21 @@ export default function DashboardLayout({
     { href: '/Admin/dashboard/restaurants', label: 'Restaurants', icon: <Utensils size={20} /> },
     { href: '/Admin/dashboard/restaurant-claims', label: 'Restaurant Claims', icon: <ShieldCheck size={20} /> },
     { href: '/Admin/dashboard/review-moderation', label: 'Review Moderation', icon: <ShieldBan size={20} /> },
+    { href: '/Admin/dashboard/flagged-reviews', label: 'Flagged Reviews', icon: <Flag size={20} /> },
   ]
 
  const isActive = (href: string) => pathname === href
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <aside
         className={`${
           sidebarOpen ? 'w-64' : 'w-20'
-        } bg-[#fff1e1] text-black transition-all duration-300 ease-in-out flex flex-col`}
+        } bg-[#fff1e1] border-r border-black text-black transition-all duration-300 ease-in-out flex flex-col`}
       >
         {/* Logo/Header */}
-        <div className="p-6 border-b border-slate-800">
+        <div className="p-6 border-b border-black">
           <div className="flex items-center justify-between">
             {sidebarOpen && (
               <h1 className="text-xl font-bold">Management</h1>
@@ -83,7 +84,7 @@ export default function DashboardLayout({
               className={`flex items-center gap-4 px-4 py-3 rounded-lg transition-colors ${
                 isActive(item.href)
                   ? 'bg-[#ff8400] text-white'
-                  : 'text-slate-900 hover:bg-[#ff8200]'
+                  : 'text-slate-900 hover:bg-[#ff8200]/30'
               }`}
             >
               <span className="text-xl">{item.icon}</span>
@@ -93,7 +94,7 @@ export default function DashboardLayout({
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-800 space-y-3">
+        <div className="p-4 border-t border-black space-y-3">
           {sidebarOpen && admin && (
             <p className="text-xs text-slate-600 truncate">{admin.name}</p>
           )}

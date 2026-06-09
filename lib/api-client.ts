@@ -198,6 +198,51 @@ export class APIClient {
     });
   }
 
+  static async getFlaggedReviews(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }) {
+    let url = '/admin/review-moderation/flagged-reviews';
+    if (params) {
+      const searchParams = new URLSearchParams();
+      if (typeof params.page === 'number') searchParams.append('page', String(params.page));
+      if (typeof params.limit === 'number') searchParams.append('limit', String(params.limit));
+      if (params.search) searchParams.append('search', params.search);
+      const qs = searchParams.toString();
+      if (qs) url += `?${qs}`;
+    }
+    return await this.request(url);
+  }
+
+  static async getFlaggedReviewsCount() {
+    return await this.request('/admin/review-moderation/flagged-reviews/count');
+  }
+
+  static async approveFlaggedReview(id: string, adminNotes?: string) {
+    return await this.request(`/admin/review-moderation/flagged-reviews/${id}/approve`, {
+      method: 'PATCH',
+      body: JSON.stringify({ adminNotes }),
+    });
+  }
+
+  static async denyFlaggedReview(id: string, adminNotes?: string) {
+    return await this.request(`/admin/review-moderation/flagged-reviews/${id}/deny`, {
+      method: 'PATCH',
+      body: JSON.stringify({ adminNotes }),
+    });
+  }
+
+  static async updateFlaggedReview(
+    id: string,
+    body: { title?: string; comment?: string; adminNotes?: string }
+  ) {
+    return await this.request(`/admin/review-moderation/flagged-reviews/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
   static async updateRestaurantClaimStatus(
     id: string,
     status: 'approved' | 'rejected',
