@@ -65,6 +65,18 @@ export interface FlaggedReview {
   chef?: FlaggedReviewChef;
 }
 
+export interface AdminRestaurantReview {
+  _id: string;
+  title?: string;
+  comment: string;
+  status: 'published' | 'flagged';
+  flaggedReason?: string;
+  adminEditedAt?: string;
+  createdAt: string;
+  updatedAt?: string;
+  chef?: FlaggedReviewChef;
+}
+
 export type RestaurantClaimStatus = 'pending' | 'approved' | 'rejected';
 
 export interface RestaurantClaim {
@@ -135,4 +147,73 @@ export interface AdminRestaurantDetail extends AdminRestaurant {
     reviewedAt?: string;
     createdAt?: string;
   }>;
+}
+
+export type AdRequestStatus = 'pending' | 'approved' | 'rejected';
+
+export interface AdPlacement {
+  key: string;
+  name: string;
+  priceLabel: string;
+  pricePerDay: number;
+  cells?: Record<string, string>;
+}
+
+export interface AdPricingColumn {
+  id: string;
+  label: string;
+  order: number;
+}
+
+export interface AdPricingRow {
+  id: string;
+  slotKey: string;
+  cells: Record<string, string>;
+  pricePerDay: number;
+  isActive: boolean;
+  order: number;
+}
+
+export interface AdPricingTable {
+  configId: string;
+  columns: AdPricingColumn[];
+  rows: AdPricingRow[];
+  updatedAt?: string;
+}
+
+export interface AdCampaign {
+  _id: string;
+  placementKey: string;
+  businessName: string;
+  startDate: string;
+  endDate: string;
+  status: 'scheduled' | 'active' | 'expired' | 'cancelled';
+}
+
+export interface AdRequest {
+  _id: string;
+  businessName: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  websiteUrl: string;
+  placementKey: string;
+  placement?: AdPlacement;
+  days: number;
+  duration?: string;
+  adImageUrl?: string | null;
+  needsDesign?: boolean;
+  message?: string;
+  status: AdRequestStatus;
+  adminNotes?: string;
+  rejectionEmailMessage?: string;
+  reviewedBy?: {
+    _id?: string;
+    name?: string;
+    email?: string;
+  };
+  reviewedAt?: string;
+  campaignId?: AdCampaign | string;
+  createdAt?: string;
+  updatedAt?: string;
 }

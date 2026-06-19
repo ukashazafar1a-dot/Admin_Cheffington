@@ -8,8 +8,9 @@ type DashboardData = {
   applications: { total: number; pending: number; approved: number; rejected: number };
   restaurants: { total: number; published: number; draft: number; archived: number };
   claims: { total: number; pending: number; approved: number; rejected: number };
-  recentApplications: Array<{ name: string; email: string; status: string; createdAt?: string }>;
-  recentClaims: Array<{ restaurant: string; claimantEmail: string; status: string; createdAt?: string }>;
+  reviews: { published: number; flagged: number; removed: number; total: number };
+  flaggedPending: number;
+  bannedPhrases: number;
 };
 
 export default function DashboardPage() {
@@ -19,8 +20,9 @@ export default function DashboardPage() {
     applications: { total: 0, pending: 0, approved: 0, rejected: 0 },
     restaurants: { total: 0, published: 0, draft: 0, archived: 0 },
     claims: { total: 0, pending: 0, approved: 0, rejected: 0 },
-    recentApplications: [],
-    recentClaims: [],
+    reviews: { published: 0, flagged: 0, removed: 0, total: 0 },
+    flaggedPending: 0,
+    bannedPhrases: 0,
   });
 
   useEffect(() => {
@@ -30,25 +32,24 @@ export default function DashboardPage() {
         setError('');
         const [
           appStatsRes,
-          appListRes,
           restaurantRes,
           claimPendingRes,
           claimApprovedRes,
           claimRejectedRes,
-          claimRecentRes,
+          moderationOverviewRes,
         ] = await Promise.all([
           APIClient.getDashboardStats(),
-          APIClient.getChefApplications({ sortBy: 'createdAt', order: 'desc' }),
           APIClient.getAdminRestaurants({ limit: 1 }),
           APIClient.getRestaurantClaims({ status: 'pending', limit: 1 }),
           APIClient.getRestaurantClaims({ status: 'approved', limit: 1 }),
           APIClient.getRestaurantClaims({ status: 'rejected', limit: 1 }),
-          APIClient.getRestaurantClaims({ page: 1, limit: 5 }),
+          APIClient.getReviewModerationOverview(),
         ]);
 
         const pending = claimPendingRes.count ?? 0;
         const approved = claimApprovedRes.count ?? 0;
         const rejected = claimRejectedRes.count ?? 0;
+        const moderation = moderationOverviewRes?.data;
 
         setData({
           applications: {
@@ -69,18 +70,14 @@ export default function DashboardPage() {
             approved,
             rejected,
           },
-          recentApplications: (appListRes?.data || []).slice(0, 5).map((app: any) => ({
-            name: `${app.firstName || ''} ${app.lastName || ''}`.trim() || '-',
-            email: app.email || '-',
-            status: app.status || '-',
-            createdAt: app.createdAt,
-          })),
-          recentClaims: (claimRecentRes?.data || []).slice(0, 5).map((claim: any) => ({
-            restaurant: claim.restaurantId?.name || '-',
-            claimantEmail: claim.claimantEmail || '-',
-            status: claim.status || '-',
-            createdAt: claim.createdAt,
-          })),
+          reviews: {
+            published: moderation?.reviews?.published ?? 0,
+            flagged: moderation?.reviews?.flagged ?? 0,
+            removed: moderation?.reviews?.removed ?? 0,
+            total: moderation?.reviews?.total ?? 0,
+          },
+          flaggedPending: moderation?.flaggedPending ?? 0,
+          bannedPhrases: moderation?.bannedPhrases ?? 0,
         });
       } catch (loadError) {
         setError(
@@ -95,12 +92,6 @@ export default function DashboardPage() {
 
     load();
   }, []);
-
-  const formatDate = (value?: string) => {
-    if (!value) return '-';
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? '-' : date.toLocaleDateString();
-  };
 
   if (loading) {
     return <p className="text-neutral-800">Loading dashboard data...</p>;
@@ -160,61 +151,47 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-      </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle>Recent Applications</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">
+              Restaurant Reviews
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {data.recentApplications.length ? (
-                data.recentApplications.map((app, index) => (
-                  <div key={`${app.email}-${index}`} className="flex justify-between gap-4 text-sm">
-                    <div>
-                      <p className="font-medium text-slate-900">{app.name}</p>
-                      <p className="text-slate-600">{app.email}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="capitalize text-slate-800">{app.status}</p>
-                      <p className="text-slate-500">{formatDate(app.createdAt)}</p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-slate-600">No recent applications.</p>
-              )}
-            </div>
+            <div className="text-3xl font-bold text-slate-900">{data.reviews.total}</div>
+            <p className="mt-1 text-xs text-slate-500">
+              Published {data.reviews.published} • Flagged {data.reviews.flagged} •
+              Removed {data.reviews.removed}
+            </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Recent Claim Requests</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">
+              Flagged Reviews
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {data.recentClaims.length ? (
-                data.recentClaims.map((claim, index) => (
-                  <div
-                    key={`${claim.restaurant}-${claim.claimantEmail}-${index}`}
-                    className="flex justify-between gap-4 text-sm"
-                  >
-                    <div>
-                      <p className="font-medium text-slate-900">{claim.restaurant}</p>
-                      <p className="text-slate-600">{claim.claimantEmail}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="capitalize text-slate-800">{claim.status}</p>
-                      <p className="text-slate-500">{formatDate(claim.createdAt)}</p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-slate-600">No recent claim requests.</p>
-              )}
-            </div>
+            <div className="text-3xl font-bold text-slate-900">{data.flaggedPending}</div>
+            <p className="mt-1 text-xs text-slate-500">
+              Awaiting admin approval
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">
+              Review Moderation
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-slate-900">{data.bannedPhrases}</div>
+            <p className="mt-1 text-xs text-slate-500">
+              Banned words and phrases
+            </p>
           </CardContent>
         </Card>
       </div>

@@ -174,6 +174,10 @@ export class APIClient {
     });
   }
 
+  static async getReviewModerationOverview() {
+    return await this.request('/admin/review-moderation/overview');
+  }
+
   static async getBannedPhrases() {
     return await this.request('/admin/review-moderation/banned-phrases');
   }
@@ -243,6 +247,39 @@ export class APIClient {
     });
   }
 
+  static async getRestaurantReviewsForAdmin(
+    restaurantId: string,
+    params?: { page?: number; limit?: number; search?: string }
+  ) {
+    let url = `/admin/review-moderation/restaurants/${restaurantId}/reviews`;
+    if (params) {
+      const searchParams = new URLSearchParams();
+      if (typeof params.page === 'number') searchParams.append('page', String(params.page));
+      if (typeof params.limit === 'number') searchParams.append('limit', String(params.limit));
+      if (params.search) searchParams.append('search', params.search);
+      const qs = searchParams.toString();
+      if (qs) url += `?${qs}`;
+    }
+    return await this.request(url);
+  }
+
+  static async removePublishedReview(id: string, adminNotes?: string) {
+    return await this.request(`/admin/review-moderation/reviews/${id}/remove`, {
+      method: 'PATCH',
+      body: JSON.stringify({ adminNotes }),
+    });
+  }
+
+  static async updatePublishedReview(
+    id: string,
+    body: { title?: string; comment?: string }
+  ) {
+    return await this.request(`/admin/review-moderation/reviews/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
   static async updateRestaurantClaimStatus(
     id: string,
     status: 'approved' | 'rejected',
@@ -252,6 +289,62 @@ export class APIClient {
     return await this.request(`/restaurant-claims/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status, adminNotes, rejectionEmailMessage }),
+    });
+  }
+
+  static async getAdRequests(filters?: {
+    status?: 'pending' | 'approved' | 'rejected';
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    let url = '/admin/advertising/requests';
+    if (filters) {
+      const params = new URLSearchParams();
+      if (filters.status) params.append('status', filters.status);
+      if (filters.search) params.append('search', filters.search);
+      if (typeof filters.page === 'number') params.append('page', String(filters.page));
+      if (typeof filters.limit === 'number') params.append('limit', String(filters.limit));
+      const qs = params.toString();
+      if (qs) url += `?${qs}`;
+    }
+    return await this.request(url);
+  }
+
+  static async updateAdRequestStatus(
+    id: string,
+    status: 'approved' | 'rejected',
+    body: {
+      adminNotes?: string;
+      rejectionEmailMessage?: string;
+      startDate?: string;
+      endDate?: string;
+    }
+  ) {
+    return await this.request(`/admin/advertising/requests/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, ...body }),
+    });
+  }
+
+  static async getAdvertisingPricingTable() {
+    return await this.request('/admin/advertising/pricing');
+  }
+
+  static async updateAdvertisingPricingTable(body: {
+    columns: Array<{ id: string; label: string; order: number }>;
+    rows: Array<{
+      id: string;
+      slotKey: string;
+      cells: Record<string, string>;
+      pricePerDay: number;
+      isActive: boolean;
+      order: number;
+    }>;
+  }) {
+    return await this.request('/admin/advertising/pricing', {
+      method: 'PUT',
+      body: JSON.stringify(body),
     });
   }
 
