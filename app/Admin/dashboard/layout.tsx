@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { ChefHat, Flag, LayoutDashboard, Megaphone, Menu, MessageSquareText, ShieldCheck, ShieldBan, Utensils, X } from 'lucide-react'
+import { ChefHat, LayoutDashboard, Megaphone, Menu, MessageSquareText, ShieldCheck, Utensils, X } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 
 export default function DashboardLayout({
@@ -43,12 +43,20 @@ export default function DashboardLayout({
     { href: '/Admin/dashboard/restaurants', label: 'Restaurants', icon: <Utensils size={20} /> },
     { href: '/Admin/dashboard/restaurant-claims', label: 'Restaurant Claims', icon: <ShieldCheck size={20} /> },
     { href: '/Admin/dashboard/advertising', label: 'Advertising', icon: <Megaphone size={20} /> },
-    { href: '/Admin/dashboard/review-moderation', label: 'Review Moderation', icon: <ShieldBan size={20} /> },
-    { href: '/Admin/dashboard/flagged-reviews', label: 'Flagged Reviews', icon: <Flag size={20} /> },
-    { href: '/Admin/dashboard/restaurant-reviews', label: 'Restaurant Reviews', icon: <MessageSquareText size={20} /> },
+    { href: '/Admin/dashboard/reviews', label: 'Reviews', icon: <MessageSquareText size={20} /> },
   ]
 
- const isActive = (href: string) => pathname === href
+  const isActive = (href: string) => {
+    if (href === '/Admin/dashboard/reviews') {
+      return (
+        pathname === href ||
+        pathname.startsWith('/Admin/dashboard/review-moderation') ||
+        pathname.startsWith('/Admin/dashboard/flagged-reviews') ||
+        pathname.startsWith('/Admin/dashboard/restaurant-reviews')
+      )
+    }
+    return pathname === href
+  }
 
   return (
     <div className="flex h-screen bg-gray-50">

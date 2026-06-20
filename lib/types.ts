@@ -183,11 +183,52 @@ export interface AdPricingTable {
 
 export interface AdCampaign {
   _id: string;
+  adRequestId?: string;
   placementKey: string;
+  canonicalSlotKey?: string;
+  placementName?: string;
+  placementPages?: string | null;
   businessName: string;
+  contactEmail?: string;
+  linkUrl?: string;
+  imageUrl?: string | null;
   startDate: string;
   endDate: string;
   status: 'scheduled' | 'active' | 'expired' | 'cancelled';
+  displayStatus?: 'live' | 'scheduled' | 'expired' | 'cancelled' | 'empty' | 'unknown';
+  dayCount?: number;
+  visibleOnSite?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AdSlotOverview {
+  slotKey: string;
+  label: string;
+  pages: string;
+  slotStatus: 'live' | 'scheduled' | 'empty';
+  onSiteCampaign?: AdCampaign | null;
+  upcomingCampaign?: AdCampaign | null;
+  liveCount?: number;
+  scheduledCount?: number;
+  liveCampaign?: AdCampaign | null;
+  nextScheduledCampaign?: AdCampaign | null;
+}
+
+export interface AdCampaignsOverview {
+  summary: {
+    liveCampaigns: number;
+    liveSlots: number;
+    scheduled: number;
+    expired: number;
+    emptySlots: number;
+    totalSlots: number;
+    totalCampaigns: number;
+    /** @deprecated use liveCampaigns */
+    liveNow?: number;
+  };
+  slots: AdSlotOverview[];
+  campaigns: AdCampaign[];
 }
 
 export interface AdRequest {

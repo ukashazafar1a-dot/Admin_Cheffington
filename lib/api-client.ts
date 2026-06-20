@@ -348,6 +348,16 @@ export class APIClient {
     });
   }
 
+  static async getAdCampaigns(filters?: {
+    status?: 'all' | 'live' | 'scheduled' | 'expired';
+  }) {
+    let url = '/admin/advertising/campaigns';
+    if (filters?.status && filters.status !== 'all') {
+      url += `?status=${encodeURIComponent(filters.status)}`;
+    }
+    return await this.request(url);
+  }
+
   // Helper to normalize _id to id
   static normalizeApplication(app: any): any {
     if (app._id && !app.id) {

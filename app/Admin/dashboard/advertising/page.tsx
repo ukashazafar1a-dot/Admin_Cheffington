@@ -6,12 +6,13 @@ import { APIClient } from '@/lib/api-client';
 import type { AdRequest } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import AdvertisingPricingEditor from '@/components/advertising-pricing-editor';
+import LiveAdsPanel from '@/components/live-ads-panel';
 import {
   getCampaignLiveLabel,
   getSlotDisplayInfo,
 } from '@/lib/ad-slots';
 
-type AdvertisingTab = 'requests' | 'pricing';
+type AdvertisingTab = 'requests' | 'pricing' | 'live';
 
 type ToastItem = {
   id: number;
@@ -283,7 +284,7 @@ export default function AdvertisingPage() {
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Advertising</h1>
           <p className="mt-2 text-gray-600">
-            Manage pricing and review ad requests.
+            Manage pricing, review ad requests, and monitor live ads on the site.
           </p>
         </div>
         {activeTab === 'requests' ? (
@@ -318,6 +319,17 @@ export default function AdvertisingPage() {
         </button>
         <button
           type="button"
+          onClick={() => setActiveTab('live')}
+          className={`border-b-2 px-4 py-2 text-sm font-semibold transition-colors ${
+            activeTab === 'live'
+              ? 'border-[#ff8400] text-[#ff8400]'
+              : 'border-transparent text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          Live ads
+        </button>
+        <button
+          type="button"
           onClick={() => setActiveTab('pricing')}
           className={`border-b-2 px-4 py-2 text-sm font-semibold transition-colors ${
             activeTab === 'pricing'
@@ -331,6 +343,8 @@ export default function AdvertisingPage() {
 
       {activeTab === 'pricing' ? (
         <AdvertisingPricingEditor />
+      ) : activeTab === 'live' ? (
+        <LiveAdsPanel />
       ) : (
         <>
 
