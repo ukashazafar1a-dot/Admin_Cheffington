@@ -150,6 +150,7 @@ export interface AdminRestaurantDetail extends AdminRestaurant {
 }
 
 export type AdRequestStatus = 'pending' | 'approved' | 'rejected';
+export type AdPaymentStatus = 'unpaid' | 'paid' | 'refunded' | 'failed';
 
 export interface AdPlacement {
   key: string;
@@ -246,6 +247,12 @@ export interface AdRequest {
   needsDesign?: boolean;
   message?: string;
   status: AdRequestStatus;
+  paymentStatus?: AdPaymentStatus;
+  amountDue?: number;
+  amountPaid?: number;
+  currency?: string;
+  paidAt?: string;
+  refundedAt?: string;
   adminNotes?: string;
   rejectionEmailMessage?: string;
   reviewedBy?: {

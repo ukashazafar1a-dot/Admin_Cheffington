@@ -120,6 +120,24 @@ function statusBadgeClass(status: AdRequest['status']) {
   return 'bg-red-100 text-red-800';
 }
 
+function paymentBadgeClass(paymentStatus?: AdRequest['paymentStatus']) {
+  if (paymentStatus === 'paid') return 'bg-emerald-100 text-emerald-800';
+  if (paymentStatus === 'refunded') return 'bg-blue-100 text-blue-800';
+  if (paymentStatus === 'failed') return 'bg-red-100 text-red-800';
+  return 'bg-gray-100 text-gray-700';
+}
+
+function formatPaymentStatus(paymentStatus?: AdRequest['paymentStatus']) {
+  if (!paymentStatus || paymentStatus === 'unpaid') return 'Unpaid';
+  return paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1);
+}
+
+function formatPaidAmount(request: AdRequest) {
+  if (request.amountPaid == null) return null;
+  const currency = (request.currency || 'aud').toUpperCase();
+  return `${currency} $${formatMoney(request.amountPaid)}`;
+}
+
 export default function AdvertisingPage() {
   const [activeTab, setActiveTab] = useState<AdvertisingTab>('requests');
   const [requests, setRequests] = useState<AdRequest[]>([]);
@@ -231,6 +249,16 @@ export default function AdvertisingPage() {
       const endDate = endDateById[id];
       if (status === 'approved' && (!startDate || !endDate)) {
         const msg = 'Set start and end dates in More details before approving.';
+        setError(msg);
+        pushToast('error', msg);
+        setExpandedIds((prev) => ({ ...prev, [id]: true }));
+        return;
+      }
+
+      const request = requests.find((item) => item._id === id);
+      if (status === 'approved' && request?.paymentStatus !== 'paid') {
+        const msg =
+          'This request has not been paid yet. Approval is only available after payment.';
         setError(msg);
         pushToast('error', msg);
         setExpandedIds((prev) => ({ ...prev, [id]: true }));
@@ -403,6 +431,7 @@ export default function AdvertisingPage() {
           {requests.map((request) => {
             const isExpanded = Boolean(expandedIds[request._id]);
             const isPending = request.status === 'pending';
+            const isPaid = request.paymentStatus === 'paid';
             const isBusy = actionId === request._id;
             const placementLabel =
               request.placement?.name || request.placementKey.replace(/_/g, ' ');
@@ -422,6 +451,11 @@ export default function AdvertisingPage() {
                       >
                         {request.status}
                       </span>
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${paymentBadgeClass(request.paymentStatus)}`}
+                      >
+                        {formatPaymentStatus(request.paymentStatus)}
+                      </span>
                     </div>
 
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
@@ -437,6 +471,12 @@ export default function AdvertisingPage() {
                         <span>
                           <span className="font-medium text-gray-800">Total:</span>{' '}
                           {requestTotal}
+                        </span>
+                      ) : null}
+                      {formatPaidAmount(request) ? (
+                        <span>
+                          <span className="font-medium text-gray-800">Paid:</span>{' '}
+                          {formatPaidAmount(request)}
                         </span>
                       ) : null}
                       <span>
@@ -475,9 +515,14 @@ export default function AdvertisingPage() {
                       <>
                         <button
                           type="button"
-                          disabled={isBusy}
+                          disabled={isBusy || !isPaid}
                           onClick={() => reviewRequest(request._id, 'approved')}
-                          className="rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60"
+                          className="rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                          title={
+                            isPaid
+                              ? 'Approve this paid ad request'
+                              : 'Payment required before approval'
+                          }
                         >
                           {isBusy ? 'Saving…' : 'Approve'}
                         </button>
@@ -566,6 +611,13 @@ export default function AdvertisingPage() {
                             {formatRequestPriceSummary(request)}
                           </p>
                         ) : null}
+                        <p>
+                          <span className="text-gray-500">Payment:</span>{' '}
+                          {formatPaymentStatus(request.paymentStatus)}
+                          {formatPaidAmount(request)
+                            ? ` · ${formatPaidAmount(request)}`
+                            : ''}
+                        </p>
                         {request.needsDesign ? (
                           <p className="text-orange-700">
                             Client requested creative design from Cheffington
@@ -659,9 +711,15 @@ export default function AdvertisingPage() {
                               [request._id]: e.target.value,
                             }))
                           }
-                          placeholder="Rejection email message (required if you reject)"
+                          placeholder="Rejection email message (required if you reject). Paid requests are refunded automatically."
                           className="min-h-16 w-full rounded-md border border-gray-300 p-2 text-sm"
                         />
+                        {!isPaid ? (
+                          <p className="text-sm text-amber-700">
+                            Waiting for payment — Approve is disabled until the customer
+                            completes Stripe checkout.
+                          </p>
+                        ) : null}
                       </div>
                     ) : (
                       <div className="mt-4 rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-700">
