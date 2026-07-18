@@ -126,6 +126,7 @@ function CampaignTable({
             <tr>
               <th className="p-3 font-semibold">Business</th>
               <th className="p-3 font-semibold">Placement</th>
+              <th className="p-3 font-semibold">Target</th>
               <th className="p-3 font-semibold">Schedule</th>
               <th className="p-3 font-semibold">Days</th>
               <th className="p-3 font-semibold">Status</th>
@@ -169,6 +170,11 @@ function CampaignTable({
                   <code className="text-xs text-gray-500">
                     {campaign.placementKey}
                   </code>
+                </td>
+                <td className="p-3 align-middle text-sm text-gray-700">
+                  {campaign.targetRegionLabel ||
+                    campaign.targetRegionKey ||
+                    'Site-wide'}
                 </td>
                 <td className="p-3 align-middle whitespace-nowrap text-gray-700">
                   {formatShortDate(campaign.startDate)} –{' '}

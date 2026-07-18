@@ -404,8 +404,10 @@ export default function AdvertisingPricingEditor() {
         <strong>Site slot keys</strong> (must match code):{' '}
         <code>header_banner</code>, <code>footer_banner</code>,{' '}
         <code>homepage_featured</code>, <code>restaurant_sidebar</code>,{' '}
-        <code>chef_sidebar</code>, <code>restaurants_top</code>,{' '}
-        <code>restaurants_list</code>, <code>about_banner</code>. Size column =
+        <code>restaurant_top</code>, <code>restaurant_right_rail</code>,{' '}
+        <code>restaurant_reviews_top</code>, <code>chef_sidebar</code>,{' '}
+        <code>restaurants_top</code>, <code>restaurants_list</code>,{' '}
+        <code>about_banner</code>. Size column =
         live box pixels (<code>300×250</code>) or presets (Large banner, Medium).
         New custom positions still need a developer to add <code>AdSlot</code> in
         code.

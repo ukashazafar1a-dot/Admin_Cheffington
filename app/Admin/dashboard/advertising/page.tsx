@@ -464,6 +464,12 @@ export default function AdvertisingPage() {
                         {placementLabel}
                       </span>
                       <span>
+                        <span className="font-medium text-gray-800">Target:</span>{' '}
+                        {request.targetRegionLabel ||
+                          request.targetRegionKey ||
+                          'Site-wide (legacy)'}
+                      </span>
+                      <span>
                         <span className="font-medium text-gray-800">Days:</span>{' '}
                         {formatRequestDays(request)}
                       </span>
@@ -578,6 +584,12 @@ export default function AdvertisingPage() {
                         <p>
                           <span className="text-gray-500">Placement:</span>{' '}
                           {placementLabel}
+                        </p>
+                        <p>
+                          <span className="text-gray-500">Target area:</span>{' '}
+                          {request.targetRegionLabel ||
+                            request.targetRegionKey ||
+                            'Site-wide (legacy)'}
                         </p>
                         <p>
                           <span className="text-gray-500">Slot key:</span>{' '}

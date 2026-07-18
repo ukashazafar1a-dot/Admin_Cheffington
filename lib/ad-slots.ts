@@ -16,8 +16,23 @@ export const KNOWN_AD_SLOTS = {
   },
   restaurant_sidebar: {
     label: 'Restaurant page sidebar',
-    pages: 'Restaurant detail pages (/restaurants/[id])',
+    pages: 'Restaurant detail pages (/restaurants/[id]) — left column',
     recommendedSize: '300×600',
+  },
+  restaurant_top: {
+    label: 'Restaurant page top banner',
+    pages: 'Restaurant detail pages (/restaurants/[id]) — below hero',
+    recommendedSize: '728×90',
+  },
+  restaurant_right_rail: {
+    label: 'Restaurant page right rail',
+    pages: 'Restaurant detail pages (/restaurants/[id]) — top of main column',
+    recommendedSize: '300×250',
+  },
+  restaurant_reviews_top: {
+    label: 'Restaurant page reviews banner',
+    pages: 'Restaurant detail pages (/restaurants/[id]) — above chef reviews',
+    recommendedSize: '728×90',
   },
   chef_sidebar: {
     label: 'Chef profile sidebar',
@@ -45,6 +60,13 @@ const AD_SLOT_ALIASES: Record<string, keyof typeof KNOWN_AD_SLOTS> = {
   restaurant_sidebar1: 'restaurant_sidebar',
   restaurant_page_sidebar: 'restaurant_sidebar',
   restaurant_page_sidebar1: 'restaurant_sidebar',
+  restaurant_page_top: 'restaurant_top',
+  restaurant_top_banner: 'restaurant_top',
+  restaurant_page_right: 'restaurant_right_rail',
+  restaurant_page_right_bar: 'restaurant_right_rail',
+  restaurant_right_bar: 'restaurant_right_rail',
+  restaurant_page_reviews: 'restaurant_reviews_top',
+  restaurant_reviews_banner: 'restaurant_reviews_top',
   homepage: 'homepage_featured',
   homepage_featured_spot: 'homepage_featured',
   chef_sidebar1: 'chef_sidebar',

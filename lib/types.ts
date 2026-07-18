@@ -199,6 +199,8 @@ export interface AdCampaign {
   displayStatus?: 'live' | 'scheduled' | 'expired' | 'cancelled' | 'empty' | 'unknown';
   dayCount?: number;
   visibleOnSite?: boolean;
+  targetRegionKey?: string;
+  targetRegionLabel?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -253,6 +255,8 @@ export interface AdRequest {
   currency?: string;
   paidAt?: string;
   refundedAt?: string;
+  targetRegionKey?: string | null;
+  targetRegionLabel?: string | null;
   adminNotes?: string;
   rejectionEmailMessage?: string;
   reviewedBy?: {
