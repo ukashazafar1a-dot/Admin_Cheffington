@@ -1,3 +1,5 @@
+import type { ComplimentaryAdPayload } from './types';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export class APIClient {
@@ -329,6 +331,70 @@ export class APIClient {
 
   static async getAdvertisingPricingTable() {
     return await this.request('/admin/advertising/pricing');
+  }
+
+  static async getAdPlacements() {
+    return await this.request('/advertising/placements');
+  }
+
+  static async getAdTargetRegions() {
+    return await this.request('/advertising/regions?scope=all');
+  }
+
+  static async getAdminTargetRegions() {
+    return await this.request('/admin/advertising/regions');
+  }
+
+  static async updateAdminTargetRegions(body: import('./types').AdTargetRegionsTable) {
+    return await this.request('/admin/advertising/regions', {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
+  static async uploadComplimentaryAdAsset(
+    file: File,
+    businessName: string
+  ) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('businessName', businessName);
+
+    const token =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('auth_token')
+        : null;
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/admin/advertising/upload-asset`,
+      {
+        method: 'POST',
+        headers,
+        body: formData,
+      }
+    );
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to upload ad image');
+    }
+    return data;
+  }
+
+  static async createComplimentaryAd(body: ComplimentaryAdPayload) {
+    return await this.request('/admin/advertising/campaigns/complimentary', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  static async cancelAdCampaign(id: string) {
+    return await this.request(`/admin/advertising/campaigns/${id}/cancel`, {
+      method: 'PATCH',
+    });
   }
 
   static async updateAdvertisingPricingTable(body: {

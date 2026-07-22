@@ -157,7 +157,46 @@ export interface AdPlacement {
   name: string;
   priceLabel: string;
   pricePerDay: number;
+  sizeLabel?: string;
+  width?: number | null;
+  height?: number | null;
   cells?: Record<string, string>;
+}
+
+export interface AdTargetRegion {
+  key: string;
+  label: string;
+  publicSelectable?: boolean;
+}
+
+export interface AdTargetRegionRow {
+  id: string;
+  key: string;
+  label: string;
+  state?: string;
+  cities: string[];
+  publicSelectable: boolean;
+  isActive: boolean;
+  order: number;
+}
+
+export interface AdTargetRegionsTable {
+  configId: string;
+  rows: AdTargetRegionRow[];
+  updatedAt?: string;
+}
+
+export type AdCampaignType = 'paid' | 'complimentary';
+
+export interface ComplimentaryAdPayload {
+  businessName: string;
+  contactEmail?: string;
+  imageUrl: string;
+  linkUrl: string;
+  placementKey: string;
+  targetRegionKey: string;
+  startDate: string;
+  endDate: string;
 }
 
 export interface AdPricingColumn {
@@ -201,6 +240,8 @@ export interface AdCampaign {
   visibleOnSite?: boolean;
   targetRegionKey?: string;
   targetRegionLabel?: string | null;
+  campaignType?: AdCampaignType;
+  isComplimentary?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

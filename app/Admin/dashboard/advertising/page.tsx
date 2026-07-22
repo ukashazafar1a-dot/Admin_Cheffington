@@ -6,13 +6,14 @@ import { APIClient } from '@/lib/api-client';
 import type { AdRequest } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import AdvertisingPricingEditor from '@/components/advertising-pricing-editor';
+import AdvertisingTargetRegionsEditor from '@/components/advertising-target-regions-editor';
 import LiveAdsPanel from '@/components/live-ads-panel';
 import {
   getCampaignLiveLabel,
   getSlotDisplayInfo,
 } from '@/lib/ad-slots';
 
-type AdvertisingTab = 'requests' | 'pricing' | 'live';
+type AdvertisingTab = 'requests' | 'pricing' | 'regions' | 'live';
 
 type ToastItem = {
   id: number;
@@ -367,10 +368,23 @@ export default function AdvertisingPage() {
         >
           Pricing table
         </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('regions')}
+          className={`border-b-2 px-4 py-2 text-sm font-semibold transition-colors ${
+            activeTab === 'regions'
+              ? 'border-[#ff8400] text-[#ff8400]'
+              : 'border-transparent text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          Target areas
+        </button>
       </div>
 
       {activeTab === 'pricing' ? (
         <AdvertisingPricingEditor />
+      ) : activeTab === 'regions' ? (
+        <AdvertisingTargetRegionsEditor />
       ) : activeTab === 'live' ? (
         <LiveAdsPanel />
       ) : (

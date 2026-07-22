@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { APIClient } from '@/lib/api-client';
 import type { AdCampaign, AdCampaignsOverview } from '@/lib/types';
 import { Card } from '@/components/ui/card';
+import ComplimentaryAdForm from '@/components/complimentary-ad-form';
 
 type PanelTab = 'overview' | 'live' | 'scheduled' | 'ended' | 'all';
 
@@ -66,12 +67,22 @@ function tabButtonClass(active: boolean) {
   }`;
 }
 
+function canCancelCampaign(campaign: AdCampaign) {
+  return (
+    campaign.displayStatus === 'live' || campaign.displayStatus === 'scheduled'
+  );
+}
+
 function CampaignTable({
   campaigns,
   emptyMessage,
+  onCancel,
+  cancellingId,
 }: {
   campaigns: AdCampaign[];
   emptyMessage: string;
+  onCancel?: (campaign: AdCampaign) => Promise<void>;
+  cancellingId?: string | null;
 }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -132,6 +143,7 @@ function CampaignTable({
               <th className="p-3 font-semibold">Status</th>
               <th className="p-3 font-semibold">On site</th>
               <th className="p-3 font-semibold">Link</th>
+              {onCancel ? <th className="p-3 font-semibold">Actions</th> : null}
             </tr>
           </thead>
           <tbody>
@@ -152,9 +164,17 @@ function CampaignTable({
                       </div>
                     )}
                     <div className="min-w-0">
-                      <p className="font-medium text-gray-900">
-                        {campaign.businessName}
-                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-medium text-gray-900">
+                          {campaign.businessName}
+                        </p>
+                        {campaign.isComplimentary ||
+                        campaign.campaignType === 'complimentary' ? (
+                          <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700">
+                            Complimentary
+                          </span>
+                        ) : null}
+                      </div>
                       {campaign.contactEmail ? (
                         <p className="truncate text-xs text-gray-500">
                           {campaign.contactEmail}
@@ -211,6 +231,22 @@ function CampaignTable({
                     '—'
                   )}
                 </td>
+                {onCancel ? (
+                  <td className="p-3 align-middle">
+                    {canCancelCampaign(campaign) ? (
+                      <button
+                        type="button"
+                        disabled={cancellingId === campaign._id}
+                        onClick={() => onCancel(campaign)}
+                        className="rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+                      >
+                        {cancellingId === campaign._id ? 'Cancelling…' : 'Cancel ad'}
+                      </button>
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>
@@ -255,6 +291,9 @@ export default function LiveAdsPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<PanelTab>('overview');
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   const loadCampaigns = useCallback(async () => {
     try {
@@ -315,6 +354,38 @@ export default function LiveAdsPanel() {
   const { summary, slots } = overview;
   const liveCampaigns = summary.liveCampaigns ?? summary.liveNow ?? 0;
 
+  const handleComplimentaryCreated = async () => {
+    setShowCreateForm(false);
+    setSuccessMessage('Complimentary ad created successfully.');
+    await loadCampaigns();
+  };
+
+  const handleCancelCampaign = async (campaign: AdCampaign) => {
+    const label = campaign.businessName || 'this ad';
+    const confirmed = window.confirm(
+      `Cancel "${label}"?\n\nIt will be removed from the site immediately. This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    try {
+      setCancellingId(campaign._id);
+      setError('');
+      const response = await APIClient.cancelAdCampaign(campaign._id);
+      if (response.success) {
+        setSuccessMessage(`"${label}" was cancelled successfully.`);
+        await loadCampaigns();
+      }
+    } catch (cancelError) {
+      setError(
+        cancelError instanceof Error
+          ? cancelError.message
+          : 'Failed to cancel ad'
+      );
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
   const tabs: { id: PanelTab; label: string; count?: number }[] = [
     { id: 'overview', label: 'Site overview' },
     { id: 'live', label: 'Live on site', count: campaignsByTab.live.length },
@@ -334,14 +405,39 @@ export default function LiveAdsPanel() {
           One row per site slot in overview. Campaign lists are split by status
           with search and pagination.
         </p>
-        <button
-          type="button"
-          onClick={loadCampaigns}
-          className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium hover:bg-gray-50"
-        >
-          Refresh
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setSuccessMessage('');
+              setShowCreateForm((current) => !current);
+            }}
+            className="rounded-md bg-[#ff8400] px-4 py-2 text-sm font-semibold text-black hover:bg-[#e67600]"
+          >
+            {showCreateForm ? 'Close form' : 'Create complimentary ad'}
+          </button>
+          <button
+            type="button"
+            onClick={loadCampaigns}
+            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium hover:bg-gray-50"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
+
+      {successMessage ? (
+        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
+          {successMessage}
+        </p>
+      ) : null}
+
+      {showCreateForm ? (
+        <ComplimentaryAdForm
+          onCreated={handleComplimentaryCreated}
+          onCancel={() => setShowCreateForm(false)}
+        />
+      ) : null}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
         {[
@@ -527,6 +623,8 @@ export default function LiveAdsPanel() {
         <CampaignTable
           campaigns={campaignsByTab.live}
           emptyMessage="No campaigns are live on the site right now."
+          onCancel={handleCancelCampaign}
+          cancellingId={cancellingId}
         />
       ) : null}
 
@@ -534,6 +632,8 @@ export default function LiveAdsPanel() {
         <CampaignTable
           campaigns={campaignsByTab.scheduled}
           emptyMessage="No scheduled campaigns."
+          onCancel={handleCancelCampaign}
+          cancellingId={cancellingId}
         />
       ) : null}
 
@@ -548,6 +648,8 @@ export default function LiveAdsPanel() {
         <CampaignTable
           campaigns={campaignsByTab.all}
           emptyMessage="No campaigns yet."
+          onCancel={handleCancelCampaign}
+          cancellingId={cancellingId}
         />
       ) : null}
     </div>
