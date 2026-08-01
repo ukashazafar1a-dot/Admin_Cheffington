@@ -1,5 +1,5 @@
 export type ChefApplicationStatus = 'pending' | 'approved' | 'rejected';
-export type ApplicationType = 'chef' | 'business_owner';
+export type ApplicationType = 'chef' | 'business_owner' | 'public';
 
 export interface ChefApplication {
   _id?: string;
@@ -21,6 +21,9 @@ export interface ChefApplication {
   professionalEmail?: string;
   professionalProof?: string;
   applicationDocuments?: string[];
+  chefAdPromoCode?: string;
+  chefAdPromoCreatedAt?: string;
+  chefAdPromoRedeemedAt?: string;
   signature?: string;
   status: ChefApplicationStatus;
   statusUpdatedAt?: string;
@@ -129,7 +132,7 @@ export interface AdminRestaurant {
     firstName?: string;
     lastName?: string;
     email?: string;
-    applicationType?: 'chef' | 'business_owner';
+    applicationType?: 'chef' | 'business_owner' | 'public';
     status?: 'pending' | 'approved' | 'rejected';
   };
   claimInfo?: {
@@ -242,8 +245,26 @@ export interface AdCampaign {
   targetRegionLabel?: string | null;
   campaignType?: AdCampaignType;
   isComplimentary?: boolean;
+  billingMode?: 'one_time' | 'subscription';
+  subscriptionStatus?: string;
+  cancelAtPeriodEnd?: boolean;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface AdCampaignCancellationResponse {
+  success: boolean;
+  message: string;
+  data: AdCampaign;
+  refund?: {
+    refunded: boolean;
+    amountRefunded: number;
+    currency?: string | null;
+    freeCheckout: boolean;
+    alreadyRefunded: boolean;
+    stripeRefundId?: string | null;
+    warning?: string | null;
+  };
 }
 
 export interface AdSlotOverview {
@@ -294,6 +315,9 @@ export interface AdRequest {
   amountDue?: number;
   amountPaid?: number;
   currency?: string;
+  promoCodeApplied?: string;
+  promoAppliedAt?: string;
+  billingMode?: 'one_time' | 'subscription';
   paidAt?: string;
   refundedAt?: string;
   targetRegionKey?: string | null;

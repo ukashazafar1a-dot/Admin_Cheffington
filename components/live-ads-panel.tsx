@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { APIClient } from '@/lib/api-client';
-import type { AdCampaign, AdCampaignsOverview } from '@/lib/types';
+import type {
+  AdCampaign,
+  AdCampaignCancellationResponse,
+  AdCampaignsOverview,
+} from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import ComplimentaryAdForm from '@/components/complimentary-ad-form';
 
@@ -362,17 +366,41 @@ export default function LiveAdsPanel() {
 
   const handleCancelCampaign = async (campaign: AdCampaign) => {
     const label = campaign.businessName || 'this ad';
+    const billingWarning =
+      campaign.campaignType === 'complimentary' || campaign.isComplimentary
+        ? '\n\nThis is a complimentary ad, so no payment refund applies.'
+        : campaign.billingMode === 'subscription'
+          ? '\n\nThe latest paid monthly charge will be fully refunded (if any), and the Stripe subscription will be cancelled to stop future charges.'
+          : '\n\nThe customer’s full payment will be refunded automatically.';
     const confirmed = window.confirm(
-      `Cancel "${label}"?\n\nIt will be removed from the site immediately. This cannot be undone.`
+      `Cancel "${label}"?\n\nIt will be removed from the site immediately.${billingWarning}\n\nThis cannot be undone.`
     );
     if (!confirmed) return;
 
     try {
       setCancellingId(campaign._id);
       setError('');
-      const response = await APIClient.cancelAdCampaign(campaign._id);
+      setSuccessMessage('');
+      const response = (await APIClient.cancelAdCampaign(
+        campaign._id
+      )) as AdCampaignCancellationResponse;
       if (response.success) {
-        setSuccessMessage(`"${label}" was cancelled successfully.`);
+        const refund = response.refund;
+        if (refund?.warning) {
+          setError(refund.warning);
+          setSuccessMessage(`"${label}" was removed from the site.`);
+        } else if (refund?.refunded && refund.amountRefunded > 0) {
+          const currency = (refund.currency || 'aud').toUpperCase();
+          setSuccessMessage(
+            `"${label}" was cancelled and ${currency} $${refund.amountRefunded} was fully refunded.`
+          );
+        } else if (refund?.freeCheckout) {
+          setSuccessMessage(
+            `"${label}" was cancelled. Its subscription was stopped; no refund was needed because the checkout was free.`
+          );
+        } else {
+          setSuccessMessage(`"${label}" was cancelled successfully.`);
+        }
         await loadCampaigns();
       }
     } catch (cancelError) {

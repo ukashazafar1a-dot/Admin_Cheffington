@@ -38,6 +38,9 @@ function requestDayCount(request: AdRequest) {
 }
 
 function formatRequestDays(request: AdRequest) {
+  if (request.billingMode === 'subscription') {
+    return 'Monthly billing cycle';
+  }
   if (typeof request.days === 'number' && request.days > 0) {
     return `${request.days} ${request.days === 1 ? 'day' : 'days'}`;
   }
@@ -62,6 +65,13 @@ function getRequestPricePerDay(request: AdRequest) {
 }
 
 function estimateRequestTotal(request: AdRequest) {
+  const amountDue = Number(request.amountDue);
+  if (Number.isFinite(amountDue) && amountDue > 0) {
+    return amountDue;
+  }
+  if (request.billingMode === 'subscription') {
+    return null;
+  }
   const days = requestDayCount(request);
   const pricePerDay = getRequestPricePerDay(request);
   if (pricePerDay <= 0 || days <= 0) return null;
@@ -77,16 +87,28 @@ function formatMoney(value: number) {
 
 function formatRequestTotal(request: AdRequest) {
   const total = estimateRequestTotal(request);
+  const currency = (request.currency || 'aud').toUpperCase();
+  if (request.billingMode === 'subscription') {
+    return total == null
+      ? 'Monthly plan'
+      : `${currency} $${formatMoney(total)}/month`;
+  }
   if (total == null) return request.placement?.priceLabel || null;
-  return `$${formatMoney(total)}`;
+  return `${currency} $${formatMoney(total)}`;
 }
 
 function formatRequestPriceSummary(request: AdRequest) {
   const total = estimateRequestTotal(request);
+  const currency = (request.currency || 'aud').toUpperCase();
+  if (request.billingMode === 'subscription') {
+    return total == null
+      ? 'Monthly plan (auto-renews)'
+      : `${currency} $${formatMoney(total)}/month (auto-renews)`;
+  }
   const days = requestDayCount(request);
   const pricePerDay = getRequestPricePerDay(request);
   if (total == null) return request.placement?.priceLabel || null;
-  return `$${formatMoney(total)} ($${formatMoney(pricePerDay)}/day × ${days} ${
+  return `${currency} $${formatMoney(total)} ($${formatMoney(pricePerDay)}/day × ${days} ${
     days === 1 ? 'day' : 'days'
   })`;
 }
@@ -137,6 +159,20 @@ function formatPaidAmount(request: AdRequest) {
   if (request.amountPaid == null) return null;
   const currency = (request.currency || 'aud').toUpperCase();
   return `${currency} $${formatMoney(request.amountPaid)}`;
+}
+
+function isFreeCouponRequest(request: AdRequest) {
+  return (
+    request.paymentStatus === 'paid' &&
+    Number(request.amountPaid) === 0 &&
+    Boolean(request.promoCodeApplied)
+  );
+}
+
+function freeCouponLabel(request: AdRequest) {
+  return request.billingMode === 'subscription'
+    ? 'Free coupon · first month free'
+    : 'Free coupon applied';
 }
 
 export default function AdvertisingPage() {
@@ -446,6 +482,7 @@ export default function AdvertisingPage() {
             const isExpanded = Boolean(expandedIds[request._id]);
             const isPending = request.status === 'pending';
             const isPaid = request.paymentStatus === 'paid';
+            const isFreeCoupon = isFreeCouponRequest(request);
             const isBusy = actionId === request._id;
             const placementLabel =
               request.placement?.name || request.placementKey.replace(/_/g, ' ');
@@ -470,6 +507,11 @@ export default function AdvertisingPage() {
                       >
                         {formatPaymentStatus(request.paymentStatus)}
                       </span>
+                      {isFreeCoupon ? (
+                        <span className="rounded-full border border-gray-300 px-2.5 py-0.5 text-xs font-medium text-gray-700">
+                          {freeCouponLabel(request)}
+                        </span>
+                      ) : null}
                     </div>
 
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
@@ -497,6 +539,15 @@ export default function AdvertisingPage() {
                         <span>
                           <span className="font-medium text-gray-800">Paid:</span>{' '}
                           {formatPaidAmount(request)}
+                        </span>
+                      ) : null}
+                      {isFreeCoupon ? (
+                        <span>
+                          <span className="font-medium text-gray-800">Promo:</span>{' '}
+                          {request.promoCodeApplied}
+                          {request.billingMode === 'subscription'
+                            ? ' · one month free advertising'
+                            : ' · no charge'}
                         </span>
                       ) : null}
                       <span>
@@ -644,6 +695,15 @@ export default function AdvertisingPage() {
                             ? ` · ${formatPaidAmount(request)}`
                             : ''}
                         </p>
+                        {isFreeCoupon ? (
+                          <p>
+                            <span className="text-gray-500">Promo:</span>{' '}
+                            {request.promoCodeApplied}
+                            {request.billingMode === 'subscription'
+                              ? ' — first month of advertising is free'
+                              : ' — checkout total was fully discounted'}
+                          </p>
+                        ) : null}
                         {request.needsDesign ? (
                           <p className="text-orange-700">
                             Client requested creative design from Cheffington

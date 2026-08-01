@@ -1,5 +1,5 @@
 export type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
-export type TypeFilter = 'all' | 'chef' | 'business_owner';
+export type TypeFilter = 'all' | 'chef' | 'business_owner' | 'public';
 
 export function buildApplicationQueryFilters(filters: {
   search?: string;

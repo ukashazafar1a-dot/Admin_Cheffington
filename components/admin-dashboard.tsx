@@ -176,13 +176,19 @@ export function AdminDashboard() {
   };
 
   const getTypeLabel = (app: ChefApplication) => {
-    return app.applicationType === 'business_owner' ? 'Business Owner' : 'Chef';
+    if (app.applicationType === 'business_owner') return 'Business Owner';
+    if (app.applicationType === 'public') return 'Individual';
+    return 'Chef';
   };
 
   const getTypeBadgeColor = (app: ChefApplication) => {
-    return app.applicationType === 'business_owner'
-      ? 'bg-orange-100 text-orange-800'
-      : 'bg-blue-100 text-blue-800';
+    if (app.applicationType === 'business_owner') {
+      return 'bg-orange-100 text-orange-800';
+    }
+    if (app.applicationType === 'public') {
+      return 'bg-purple-100 text-purple-800';
+    }
+    return 'bg-blue-100 text-blue-800';
   };
 
   const getStatusBadgeColor = (status: string) => {

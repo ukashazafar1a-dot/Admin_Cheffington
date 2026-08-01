@@ -75,7 +75,7 @@ export class APIClient {
   static async getChefApplications(filters?: {
     status?: string;
     search?: string;
-    applicationType?: 'chef' | 'business_owner';
+    applicationType?: 'chef' | 'business_owner' | 'public';
     sortBy?: string;
     order?: string;
   }) {

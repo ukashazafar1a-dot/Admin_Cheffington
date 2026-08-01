@@ -167,7 +167,9 @@ export function ApplicationDetailsModal({
             value={
               application.applicationType === 'business_owner'
                 ? 'Business Owner'
-                : 'Chef'
+                : application.applicationType === 'public'
+                  ? 'Individual'
+                  : 'Chef'
             }
           />
 
@@ -225,18 +227,32 @@ export function ApplicationDetailsModal({
 
         </DetailSection>
 
-        {/* Professional Information */}
-        <DetailSection title="Professional Information">
+        {/* Professional / profile Information */}
+        <DetailSection
+          title={
+            application.applicationType === 'public'
+              ? 'Profile Information'
+              : 'Professional Information'
+          }
+        >
 
           <DetailRow
-            label="Current Restaurant"
-            value={application.currentRestaurant}
+            label={
+              application.applicationType === 'business_owner'
+                ? 'Business / Restaurant'
+                : application.applicationType === 'public'
+                  ? 'Organization'
+                  : 'Current Restaurant'
+            }
+            value={application.currentRestaurant || '-'}
           />
 
-          <DetailRow
-            label="Job Title"
-            value={application.jobTitle}
-          />
+          {application.applicationType !== 'public' ? (
+            <DetailRow
+              label="Job Title"
+              value={application.jobTitle || '-'}
+            />
+          ) : null}
 
           <DetailRow
             label="Website"
@@ -256,46 +272,74 @@ export function ApplicationDetailsModal({
             }
           />
 
-          <DetailRow
-            label="Professional Email"
-            value={application.professionalEmail}
-          />
+          {application.applicationType !== 'public' ? (
+            <DetailRow
+              label="Professional Email"
+              value={application.professionalEmail || '-'}
+            />
+          ) : null}
+
+          {(application.applicationType === 'chef' ||
+            application.applicationType === 'public' ||
+            !application.applicationType) &&
+          application.chefAdPromoCode ? (
+            <DetailRow
+              label="Promo Code"
+              value={
+                <span>
+                  <code className="rounded bg-gray-100 px-2 py-0.5 text-sm">
+                    {application.chefAdPromoCode}
+                  </code>
+                  {application.chefAdPromoRedeemedAt
+                    ? ' (redeemed)'
+                    : ' (not redeemed)'}
+                </span>
+              }
+            />
+          ) : null}
 
         </DetailSection>
 
         {/* Documents */}
         <DetailSection title="Documents">
 
-          <DetailRow
-            label="Professional Proof"
-            value={(() => {
-              const docUrls =
-                application.applicationDocuments?.length
-                  ? application.applicationDocuments
-                  : application.professionalProof
-                    ? [application.professionalProof]
-                    : [];
+          {application.applicationType === 'public' ? (
+            <DetailRow
+              label="Verification"
+              value="Not required for Individual applications"
+            />
+          ) : (
+            <DetailRow
+              label="Professional Proof"
+              value={(() => {
+                const docUrls =
+                  application.applicationDocuments?.length
+                    ? application.applicationDocuments
+                    : application.professionalProof
+                      ? [application.professionalProof]
+                      : [];
 
-              if (docUrls.length === 0) return '-';
+                if (docUrls.length === 0) return '-';
 
-              return (
-                <ul className="space-y-2">
-                  {docUrls.map((url, index) => (
-                    <li key={`${url}-${index}`}>
-                      <a
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline"
-                      >
-                        View document {docUrls.length > 1 ? index + 1 : ''}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              );
-            })()}
-          />
+                return (
+                  <ul className="space-y-2">
+                    {docUrls.map((url, index) => (
+                      <li key={`${url}-${index}`}>
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 underline"
+                        >
+                          View document {docUrls.length > 1 ? index + 1 : ''}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                );
+              })()}
+            />
+          )}
 
           <DetailRow
             label="Signature"
