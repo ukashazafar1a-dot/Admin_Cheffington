@@ -46,6 +46,14 @@ export function ApplicationDetailsModal({
         );
 
       if (response.success) {
+        const warningMessage =
+          typeof response.message === 'string' &&
+          response.message !== 'Status updated successfully'
+            ? response.message
+            : '';
+        if (warningMessage) {
+          window.alert(warningMessage);
+        }
         onUpdate();
         onClose();
       } else {
@@ -80,6 +88,14 @@ export function ApplicationDetailsModal({
         );
 
       if (response.success) {
+        const warningMessage =
+          typeof response.message === 'string' &&
+          response.message !== 'Status updated successfully'
+            ? response.message
+            : '';
+        if (warningMessage) {
+          window.alert(warningMessage);
+        }
         onUpdate();
         onClose();
       } else {

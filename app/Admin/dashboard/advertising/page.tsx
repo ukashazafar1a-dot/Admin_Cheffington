@@ -169,10 +169,46 @@ function isFreeCouponRequest(request: AdRequest) {
   );
 }
 
+function hasPromoCode(request: AdRequest) {
+  return Boolean(String(request.promoCodeApplied || '').trim());
+}
+
+function discountPercent(request: AdRequest): number | null {
+  const due = Number(request.amountDue);
+  const paid = Number(request.amountPaid);
+  if (!Number.isFinite(due) || due <= 0 || !Number.isFinite(paid) || paid < 0) {
+    return null;
+  }
+  if (paid >= due) return null;
+  return Math.round(((due - paid) / due) * 100);
+}
+
 function freeCouponLabel(request: AdRequest) {
   return request.billingMode === 'subscription'
     ? 'Free coupon · first month free'
     : 'Free coupon applied';
+}
+
+function promoBadgeLabel(request: AdRequest) {
+  if (isFreeCouponRequest(request)) return freeCouponLabel(request);
+  const pct = discountPercent(request);
+  if (pct != null && pct > 0) return `${pct}% discount code`;
+  return 'Promo code applied';
+}
+
+function promoDetailLine(request: AdRequest) {
+  const code = request.promoCodeApplied;
+  if (!code) return null;
+  if (isFreeCouponRequest(request)) {
+    return request.billingMode === 'subscription'
+      ? `${code} · one month free advertising`
+      : `${code} · no charge`;
+  }
+  const pct = discountPercent(request);
+  if (pct != null && pct > 0) {
+    return `${code} · ${pct}% off`;
+  }
+  return code;
 }
 
 export default function AdvertisingPage() {
@@ -483,6 +519,7 @@ export default function AdvertisingPage() {
             const isPending = request.status === 'pending';
             const isPaid = request.paymentStatus === 'paid';
             const isFreeCoupon = isFreeCouponRequest(request);
+            const showPromo = hasPromoCode(request);
             const isBusy = actionId === request._id;
             const placementLabel =
               request.placement?.name || request.placementKey.replace(/_/g, ' ');
@@ -507,9 +544,9 @@ export default function AdvertisingPage() {
                       >
                         {formatPaymentStatus(request.paymentStatus)}
                       </span>
-                      {isFreeCoupon ? (
+                      {showPromo ? (
                         <span className="rounded-full border border-gray-300 px-2.5 py-0.5 text-xs font-medium text-gray-700">
-                          {freeCouponLabel(request)}
+                          {promoBadgeLabel(request)}
                         </span>
                       ) : null}
                     </div>
@@ -541,13 +578,10 @@ export default function AdvertisingPage() {
                           {formatPaidAmount(request)}
                         </span>
                       ) : null}
-                      {isFreeCoupon ? (
+                      {showPromo ? (
                         <span>
                           <span className="font-medium text-gray-800">Promo:</span>{' '}
-                          {request.promoCodeApplied}
-                          {request.billingMode === 'subscription'
-                            ? ' · one month free advertising'
-                            : ' · no charge'}
+                          {promoDetailLine(request)}
                         </span>
                       ) : null}
                       <span>
@@ -695,13 +729,10 @@ export default function AdvertisingPage() {
                             ? ` · ${formatPaidAmount(request)}`
                             : ''}
                         </p>
-                        {isFreeCoupon ? (
+                        {showPromo ? (
                           <p>
                             <span className="text-gray-500">Promo:</span>{' '}
-                            {request.promoCodeApplied}
-                            {request.billingMode === 'subscription'
-                              ? ' — first month of advertising is free'
-                              : ' — checkout total was fully discounted'}
+                            {promoDetailLine(request)}
                           </p>
                         ) : null}
                         {request.needsDesign ? (
