@@ -1,4 +1,9 @@
-export type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
+export type StatusFilter =
+  | 'all'
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'disabled';
 export type TypeFilter = 'all' | 'chef' | 'business_owner' | 'public';
 
 export function buildApplicationQueryFilters(filters: {

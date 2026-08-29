@@ -1,4 +1,8 @@
-export type ChefApplicationStatus = 'pending' | 'approved' | 'rejected';
+export type ChefApplicationStatus =
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'disabled';
 export type ApplicationType = 'chef' | 'business_owner' | 'public';
 
 export interface ChefApplication {
@@ -122,6 +126,7 @@ export interface AdminRestaurant {
   _id: string;
   name: string;
   cuisine?: string;
+  tagline?: string;
   city?: string;
   state?: string;
   country?: string;
@@ -133,13 +138,17 @@ export interface AdminRestaurant {
     lastName?: string;
     email?: string;
     applicationType?: 'chef' | 'business_owner' | 'public';
-    status?: 'pending' | 'approved' | 'rejected';
+    status?: 'pending' | 'approved' | 'rejected' | 'disabled';
   };
   claimInfo?: {
     isClaimed: boolean;
     lastClaimStatus?: 'pending' | 'approved' | 'rejected' | null;
     lastClaimAt?: string | null;
   };
+  listingSubmitter?: {
+    name?: string;
+    email?: string;
+  } | null;
 }
 
 export interface AdminRestaurantDetail extends AdminRestaurant {

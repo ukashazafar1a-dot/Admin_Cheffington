@@ -29,6 +29,9 @@ export function RestaurantsDashboard() {
   const [cities, setCities] = useState<string[]>([]);
   const [selectedRestaurant, setSelectedRestaurant] =
     useState<AdminRestaurantDetail | null>(null);
+  const [listingCuisine, setListingCuisine] = useState('');
+  const [listingTagline, setListingTagline] = useState('');
+  const [listingSaving, setListingSaving] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [stats, setStats] = useState({
@@ -99,6 +102,8 @@ export function RestaurantsDashboard() {
       const response = await APIClient.getAdminRestaurant(id);
       if (response.success) {
         setSelectedRestaurant(response.data);
+        setListingCuisine(response.data?.cuisine || '');
+        setListingTagline(response.data?.tagline || '');
       }
     } catch (detailError) {
       const msg =
@@ -109,6 +114,40 @@ export function RestaurantsDashboard() {
       pushToast('error', msg);
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const saveListingFields = async () => {
+    if (!selectedRestaurant?._id) return;
+    try {
+      setListingSaving(true);
+      const response = await APIClient.updateAdminRestaurantListing(
+        selectedRestaurant._id,
+        {
+          cuisine: listingCuisine,
+          tagline: listingTagline,
+        }
+      );
+      setSelectedRestaurant((prev) =>
+        prev
+          ? {
+              ...prev,
+              cuisine: response.data?.cuisine ?? listingCuisine,
+              tagline: response.data?.tagline ?? listingTagline,
+            }
+          : prev
+      );
+      pushToast('success', response.message || 'Cuisine and tagline updated');
+      await loadRestaurants();
+    } catch (listingError) {
+      const msg =
+        listingError instanceof Error
+          ? listingError.message
+          : 'Failed to update cuisine and tagline';
+      setError(msg);
+      pushToast('error', msg);
+    } finally {
+      setListingSaving(false);
     }
   };
 
@@ -128,6 +167,32 @@ export function RestaurantsDashboard() {
         statusError instanceof Error
           ? statusError.message
           : 'Failed to update restaurant status';
+      setError(msg);
+      pushToast('error', msg);
+    }
+  };
+
+  const removeRestaurant = async (restaurant: AdminRestaurant) => {
+    if (restaurant.status !== 'archived') {
+      pushToast('error', 'Archive the restaurant first, then you can remove it.');
+      return;
+    }
+    const confirmed = window.confirm(
+      `Remove "${restaurant.name}" from the list? This cannot be undone.`
+    );
+    if (!confirmed) return;
+    try {
+      const response = await APIClient.deleteAdminRestaurant(restaurant._id);
+      if (selectedRestaurant?._id === restaurant._id) {
+        setSelectedRestaurant(null);
+      }
+      pushToast('success', response.message || 'Restaurant removed from the list');
+      await loadRestaurants();
+    } catch (removeError) {
+      const msg =
+        removeError instanceof Error
+          ? removeError.message
+          : 'Failed to remove restaurant';
       setError(msg);
       pushToast('error', msg);
     }
@@ -159,9 +224,18 @@ export function RestaurantsDashboard() {
     () =>
       restaurants.map((restaurant) => {
         const ownerName = `${restaurant.ownerId?.firstName || ''} ${restaurant.ownerId?.lastName || ''}`.trim();
+        const hasOwner = Boolean(ownerName || restaurant.ownerId?.email);
+        const submitterName = restaurant.listingSubmitter?.name?.trim() || '';
+        const submitterEmail = restaurant.listingSubmitter?.email?.trim() || '';
         return {
           ...restaurant,
-          ownerLabel: ownerName || restaurant.ownerId?.email || '-',
+          ownerLabel: hasOwner
+            ? ownerName || restaurant.ownerId?.email || '-'
+            : submitterName || '-',
+          contactEmail: hasOwner
+            ? restaurant.ownerId?.email || '-'
+            : submitterEmail || '-',
+          contactIsSubmitter: !hasOwner && Boolean(submitterName || submitterEmail),
           updatedLabel: restaurant.updatedAt
             ? new Date(restaurant.updatedAt).toLocaleDateString()
             : '-',
@@ -300,6 +374,7 @@ export function RestaurantsDashboard() {
             <tr className="border-b border-slate-200 bg-slate-50/60">
               <th className="whitespace-nowrap px-4 py-3 text-left text-sm font-semibold text-neutral-950">Name</th>
               <th className="whitespace-nowrap px-4 py-3 text-left text-sm font-semibold text-neutral-950">Cuisine</th>
+              <th className="whitespace-nowrap px-4 py-3 text-left text-sm font-semibold text-neutral-950">Tagline</th>
               <th className="whitespace-nowrap px-4 py-3 text-left text-sm font-semibold text-neutral-950">Location</th>
               <th className="whitespace-nowrap px-4 py-3 text-left text-sm font-semibold text-neutral-950">Owner</th>
               <th className="whitespace-nowrap px-4 py-3 text-left text-sm font-semibold text-neutral-950">Owner Email</th>
@@ -312,7 +387,7 @@ export function RestaurantsDashboard() {
           <tbody>
             {loading ? (
               <tr>
-                <td className="px-4 py-6 text-sm text-neutral-700" colSpan={10}>
+                <td className="px-4 py-6 text-sm text-neutral-700" colSpan={11}>
                   Loading restaurants...
                 </td>
               </tr>
@@ -323,14 +398,26 @@ export function RestaurantsDashboard() {
                   <td className="max-w-[220px] px-4 py-4 text-neutral-950">
                     <p className="line-clamp-2">{restaurant.cuisine || '-'}</p>
                   </td>
+                  <td className="max-w-[220px] px-4 py-4 text-neutral-950">
+                    <p className="line-clamp-2">{restaurant.tagline || '-'}</p>
+                  </td>
                   <td className="px-4 py-4 text-neutral-950">
                     {[restaurant.city, restaurant.state, restaurant.country]
                       .filter(Boolean)
                       .join(', ') || '-'}
                   </td>
-                  <td className="px-4 py-4 text-neutral-950">{restaurant.ownerLabel}</td>
                   <td className="px-4 py-4 text-neutral-950">
-                    <span className="break-all">{restaurant.ownerId?.email || '-'}</span>
+                    <div className="space-y-1">
+                      <div>{restaurant.ownerLabel}</div>
+                      {restaurant.contactIsSubmitter ? (
+                        <span className="inline-flex rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[11px] font-medium text-[#c45d00]">
+                          Add listing submitter
+                        </span>
+                      ) : null}
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 text-neutral-950">
+                    <span className="break-all">{restaurant.contactEmail}</span>
                   </td>
                   <td className="px-4 py-4 text-neutral-950">
                     <div className="space-y-1">
@@ -414,14 +501,22 @@ export function RestaurantsDashboard() {
                         >
                           Archive
                         </button>
-                      ) : null}
+                      ) : (
+                        <button
+                          type="button"
+                          className="col-span-2 rounded border border-red-500 bg-red-50 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
+                          onClick={() => removeRestaurant(restaurant)}
+                        >
+                          Remove from list
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td className="px-4 py-6 text-sm text-neutral-700" colSpan={10}>
+                <td className="px-4 py-6 text-sm text-neutral-700" colSpan={11}>
                   No restaurants found.
                 </td>
               </tr>
@@ -446,10 +541,37 @@ export function RestaurantsDashboard() {
               </button>
             </div>
             <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
-              <p>
-                <span className="font-semibold">Cuisine:</span>{' '}
-                {selectedRestaurant.cuisine || '-'}
-              </p>
+              <div className="md:col-span-2 rounded-md border border-slate-200 bg-slate-50 p-3">
+                <p className="mb-3 text-xs text-slate-600">
+                  Cuisine type belongs in Cuisine (Italian, Mexican). Put slogans in Tagline.
+                  Reviews do not change these fields.
+                </p>
+                <label className="mb-1 block text-xs font-semibold text-slate-700">
+                  Cuisine
+                </label>
+                <Input
+                  value={listingCuisine}
+                  onChange={(e) => setListingCuisine(e.target.value)}
+                  placeholder="Italian, Mexican, …"
+                  className="mb-3"
+                />
+                <label className="mb-1 block text-xs font-semibold text-slate-700">
+                  Tagline
+                </label>
+                <Input
+                  value={listingTagline}
+                  onChange={(e) => setListingTagline(e.target.value)}
+                  placeholder="Short slogan — optional"
+                />
+                <button
+                  type="button"
+                  onClick={saveListingFields}
+                  disabled={listingSaving}
+                  className="mt-3 rounded bg-[#ff8400] px-3 py-1.5 text-sm font-medium text-black hover:bg-[#e67600] disabled:opacity-50"
+                >
+                  {listingSaving ? 'Saving...' : 'Save cuisine / tagline'}
+                </button>
+              </div>
               <p>
                 <span className="font-semibold">Status:</span>{' '}
                 {selectedRestaurant.status}
@@ -461,10 +583,25 @@ export function RestaurantsDashboard() {
                   .join(', ') || '-'}
               </p>
               <p>
-                <span className="font-semibold">Owner:</span>{' '}
-                {selectedRestaurant.ownerId?.firstName || ''}{' '}
-                {selectedRestaurant.ownerId?.lastName || ''} (
-                {selectedRestaurant.ownerId?.email || '-'})
+                <span className="font-semibold">
+                  {selectedRestaurant.ownerId?.email
+                    ? 'Owner:'
+                    : selectedRestaurant.listingSubmitter?.name ||
+                        selectedRestaurant.listingSubmitter?.email
+                      ? 'Submitted by:'
+                      : 'Owner:'}
+                </span>{' '}
+                {selectedRestaurant.ownerId?.firstName ||
+                selectedRestaurant.ownerId?.lastName ||
+                selectedRestaurant.ownerId?.email
+                  ? `${selectedRestaurant.ownerId?.firstName || ''} ${selectedRestaurant.ownerId?.lastName || ''}`.trim() +
+                    (selectedRestaurant.ownerId?.email
+                      ? ` (${selectedRestaurant.ownerId.email})`
+                      : '')
+                  : selectedRestaurant.listingSubmitter?.name ||
+                      selectedRestaurant.listingSubmitter?.email
+                    ? `${selectedRestaurant.listingSubmitter?.name || '-'} (${selectedRestaurant.listingSubmitter?.email || '-'})`
+                    : '-'}
               </p>
             </div>
 

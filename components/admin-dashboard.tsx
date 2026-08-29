@@ -31,6 +31,7 @@ type DashboardStats = {
   pending: number;
   approved: number;
   rejected: number;
+  disabled: number;
 };
 
 const SEARCH_DEBOUNCE_MS = 350;
@@ -46,6 +47,7 @@ export function AdminDashboard() {
     pending: 0,
     approved: 0,
     rejected: 0,
+    disabled: 0,
   });
 
   const [loading, setLoading] = useState(true);
@@ -127,6 +129,7 @@ export function AdminDashboard() {
             pending: response.data.pending ?? 0,
             approved: response.data.approved ?? 0,
             rejected: response.data.rejected ?? 0,
+            disabled: response.data.disabled ?? 0,
           });
         }
       } catch (error) {
@@ -161,6 +164,7 @@ export function AdminDashboard() {
           pending: statsResponse.data.pending ?? 0,
           approved: statsResponse.data.approved ?? 0,
           rejected: statsResponse.data.rejected ?? 0,
+          disabled: statsResponse.data.disabled ?? 0,
         });
       }
 
@@ -191,6 +195,11 @@ export function AdminDashboard() {
     return 'bg-blue-100 text-blue-800';
   };
 
+  const getStatusLabel = (status: string) => {
+    if (status === 'disabled') return 'Removed';
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
+
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'approved':
@@ -198,6 +207,9 @@ export function AdminDashboard() {
 
       case 'rejected':
         return 'bg-red-100 text-red-800';
+
+      case 'disabled':
+        return 'bg-slate-200 text-slate-800';
 
       default:
         return 'bg-yellow-100 text-yellow-800';
@@ -252,7 +264,7 @@ export function AdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
           <button
             type="button"
             onClick={() => setStatusFilter('all')}
@@ -328,6 +340,25 @@ export function AdminDashboard() {
               </p>
             </Card>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setStatusFilter('disabled')}
+            className="text-left"
+          >
+            <Card
+              className={`p-6 transition ${
+                statusFilter === 'disabled' ? 'ring-2 ring-[#ff8400]' : ''
+              }`}
+            >
+              <p className="text-neutral-950 text-sm font-medium">
+                Removed
+              </p>
+              <p className="text-3xl font-bold text-slate-700 mt-2">
+                {stats.disabled}
+              </p>
+            </Card>
+          </button>
         </div>
 
         {/* Filters */}
@@ -370,6 +401,8 @@ export function AdminDashboard() {
                 <option value="approved">Approved</option>
 
                 <option value="rejected">Rejected</option>
+
+                <option value="disabled">Removed</option>
               </select>
             </div>
 
@@ -499,8 +532,7 @@ export function AdminDashboard() {
                             app.status
                           )}`}
                         >
-                          {app.status.charAt(0).toUpperCase() +
-                            app.status.slice(1)}
+                          {getStatusLabel(app.status)}
                         </span>
                       </TableCell>
 

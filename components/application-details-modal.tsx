@@ -32,6 +32,17 @@ export function ApplicationDetailsModal({
 
   const isPending =
     application.status?.trim().toLowerCase() === 'pending';
+  const isApproved =
+    application.status?.trim().toLowerCase() === 'approved';
+  const isDisabled =
+    application.status?.trim().toLowerCase() === 'disabled';
+
+  const accountKind =
+    application.applicationType === 'business_owner'
+      ? 'business owner'
+      : application.applicationType === 'public'
+        ? 'user'
+        : 'chef';
 
   const handleApprove = async () => {
     setError('');
@@ -106,6 +117,78 @@ export function ApplicationDetailsModal({
         err instanceof Error
           ? err.message
           : 'Error updating application'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDisable = async () => {
+    if (
+      !window.confirm(
+        `Remove this ${accountKind} from the site?\n\nThey will be signed out and cannot log in. Their public chef profile and search listing disappear. Existing restaurant reviews stay published. Restaurants and ads are not deleted.`
+      )
+    ) {
+      return;
+    }
+    if (!adminNotes.trim()) {
+      setError('Please add a short note before removing this account');
+      return;
+    }
+
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await APIClient.updateApplicationStatus(
+        application._id || application.id!,
+        'disabled',
+        adminNotes
+      );
+
+      if (response.success) {
+        onUpdate();
+        onClose();
+      } else {
+        setError('Failed to remove account');
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Error updating application'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (
+      !window.confirm(
+        `Restore this ${accountKind}? They will be able to sign in again and their public profile will show if they are a chef.`
+      )
+    ) {
+      return;
+    }
+
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await APIClient.updateApplicationStatus(
+        application._id || application.id!,
+        'approved',
+        adminNotes
+      );
+
+      if (response.success) {
+        onUpdate();
+        onClose();
+      } else {
+        setError('Failed to restore account');
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Error updating application'
       );
     } finally {
       setLoading(false);
@@ -386,13 +469,15 @@ export function ApplicationDetailsModal({
                     ? 'bg-green-100 text-green-700'
                     : application.status === 'rejected'
                     ? 'bg-red-100 text-red-700'
+                    : application.status === 'disabled'
+                    ? 'bg-slate-200 text-slate-800'
                     : 'bg-yellow-100 text-yellow-700'
                 }`}
               >
-                {application.status
-                  .charAt(0)
-                  .toUpperCase() +
-                  application.status.slice(1)}
+                {application.status === 'disabled'
+                  ? 'Removed'
+                  : application.status.charAt(0).toUpperCase() +
+                    application.status.slice(1)}
               </span>
             }
           />
@@ -444,7 +529,7 @@ export function ApplicationDetailsModal({
             Review Application
           </h3>
 
-          {!isPending ? (
+          {!isPending && !isApproved ? (
             <div className="mb-4 text-sm text-gray-600">
               This application has already been reviewed as{' '}
               <strong>{application.status}</strong>.
@@ -461,7 +546,11 @@ export function ApplicationDetailsModal({
                 onChange={(e) =>
                   setAdminNotes(e.target.value)
                 }
-                placeholder="Add notes about this application..."
+                placeholder={
+                  isApproved
+                    ? 'Required note before removing this account...'
+                    : 'Add notes about this application...'
+                }
                 rows={5}
               />
 
@@ -496,6 +585,27 @@ export function ApplicationDetailsModal({
                 ? 'Processing...'
                 : 'Reject Application'}
             </Button>
+
+            {isApproved ? (
+              <Button
+                onClick={handleDisable}
+                disabled={loading}
+                variant="destructive"
+                className="flex-1 bg-neutral-800 hover:bg-neutral-900 text-white"
+              >
+                {loading ? 'Processing...' : `Remove ${accountKind}`}
+              </Button>
+            ) : null}
+
+            {isDisabled ? (
+              <Button
+                onClick={handleRestore}
+                disabled={loading}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+              >
+                {loading ? 'Processing...' : 'Restore account'}
+              </Button>
+            ) : null}
 
           </div>
 

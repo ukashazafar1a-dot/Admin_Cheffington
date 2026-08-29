@@ -97,7 +97,7 @@ export class APIClient {
     return await this.request(`/chef-applications/${id}`);
   }
 
-  static async updateApplicationStatus(id: string, status: 'approved' | 'rejected' | 'pending', adminNotes?: string) {
+  static async updateApplicationStatus(id: string, status: 'approved' | 'rejected' | 'pending' | 'disabled', adminNotes?: string) {
     return await this.request(`/chef-applications/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status, adminNotes }),
@@ -156,6 +156,16 @@ export class APIClient {
     return await this.request(`/admin/restaurants/${id}`);
   }
 
+  static async updateAdminRestaurantListing(
+    id: string,
+    body: { cuisine?: string; tagline?: string }
+  ) {
+    return await this.request(`/admin/restaurants/${id}/listing`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
   static async updateAdminRestaurantStatus(
     id: string,
     status: 'draft' | 'published' | 'archived'
@@ -173,6 +183,12 @@ export class APIClient {
     return await this.request(`/admin/restaurants/${id}/owner`, {
       method: 'PATCH',
       body: JSON.stringify(body),
+    });
+  }
+
+  static async deleteAdminRestaurant(id: string) {
+    return await this.request(`/admin/restaurants/${id}`, {
+      method: 'DELETE',
     });
   }
 
@@ -291,6 +307,36 @@ export class APIClient {
     return await this.request(`/restaurant-claims/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status, adminNotes, rejectionEmailMessage }),
+    });
+  }
+
+  static async getRestaurantSuggestions(filters?: {
+    status?: 'pending' | 'approved' | 'rejected';
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    let url = '/restaurant-suggestions';
+    if (filters) {
+      const params = new URLSearchParams();
+      if (filters.status) params.append('status', filters.status);
+      if (filters.search) params.append('search', filters.search);
+      if (typeof filters.page === 'number') params.append('page', String(filters.page));
+      if (typeof filters.limit === 'number') params.append('limit', String(filters.limit));
+      const qs = params.toString();
+      if (qs) url += `?${qs}`;
+    }
+    return await this.request(url);
+  }
+
+  static async updateRestaurantSuggestionStatus(
+    id: string,
+    status: 'approved' | 'rejected',
+    adminNotes?: string
+  ) {
+    return await this.request(`/restaurant-suggestions/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, adminNotes }),
     });
   }
 
@@ -422,6 +468,20 @@ export class APIClient {
       url += `?status=${encodeURIComponent(filters.status)}`;
     }
     return await this.request(url);
+  }
+
+  static async getAdminSiteCopy() {
+    return await this.request('/admin/site-copy');
+  }
+
+  static async updateAdminSiteCopy(body: {
+    homepage_subtitle?: string;
+    chefs_kiss_lines?: string[] | string;
+  }) {
+    return await this.request('/admin/site-copy', {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
   }
 
   // Helper to normalize _id to id

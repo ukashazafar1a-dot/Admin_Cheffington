@@ -3,9 +3,16 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { APIClient } from '@/lib/api-client';
+import HomepageCopyEditor from '@/components/homepage-copy-editor';
 
 type DashboardData = {
-  applications: { total: number; pending: number; approved: number; rejected: number };
+  applications: {
+    total: number;
+    pending: number;
+    approved: number;
+    rejected: number;
+    disabled: number;
+  };
   restaurants: { total: number; published: number; draft: number; archived: number };
   claims: { total: number; pending: number; approved: number; rejected: number };
   reviews: { published: number; flagged: number; removed: number; total: number };
@@ -17,7 +24,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [data, setData] = useState<DashboardData>({
-    applications: { total: 0, pending: 0, approved: 0, rejected: 0 },
+    applications: { total: 0, pending: 0, approved: 0, rejected: 0, disabled: 0 },
     restaurants: { total: 0, published: 0, draft: 0, archived: 0 },
     claims: { total: 0, pending: 0, approved: 0, rejected: 0 },
     reviews: { published: 0, flagged: 0, removed: 0, total: 0 },
@@ -57,6 +64,7 @@ export default function DashboardPage() {
             pending: appStatsRes?.data?.pending ?? 0,
             approved: appStatsRes?.data?.approved ?? 0,
             rejected: appStatsRes?.data?.rejected ?? 0,
+            disabled: appStatsRes?.data?.disabled ?? 0,
           },
           restaurants: {
             total: restaurantRes?.stats?.total ?? 0,
@@ -117,7 +125,7 @@ export default function DashboardPage() {
             <div className="text-3xl font-bold text-slate-900">{data.applications.total}</div>
             <p className="mt-1 text-xs text-slate-500">
               Pending {data.applications.pending} • Approved {data.applications.approved} •
-              Rejected {data.applications.rejected}
+              Rejected {data.applications.rejected} • Removed {data.applications.disabled}
             </p>
           </CardContent>
         </Card>
@@ -195,6 +203,8 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <HomepageCopyEditor />
     </div>
   );
 }
